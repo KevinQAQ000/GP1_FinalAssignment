@@ -73,7 +73,8 @@ public class Gun : MonoBehaviour
         }
         GunAudio.PlayOneShot(ShootClip);//播放开火音效
         GunShake.GenerateImpulse();//枪震动
-
+        //sssss
+        //llll
 
     }
 }
