@@ -1275,7 +1275,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8317007498109848787, guid: a722c3854c6ea0844b445c6a3bf144c3, type: 3}
       propertyPath: gunType
-      value: 3
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8317007498109848787, guid: a722c3854c6ea0844b445c6a3bf144c3, type: 3}
       propertyPath: ReloadTimer
