@@ -44,7 +44,7 @@ public class Gun : MonoBehaviour
                     ReloadTime = ReloadTimer;//重置计时器
                                              //实例化子弹 设置开始位置 和旋转 
                     Instantiate(BulletPrefab, FirePoint.position, FirePoint.rotation);//实例化子弹 初始化
-                    
+                    GunShake.GenerateImpulse();//枪震动
                 }
                 break;
             case GunType.Rifle:
@@ -54,7 +54,7 @@ public class Gun : MonoBehaviour
                     ReloadTime = ReloadTimer;//重置计时器
                                              //实例化子弹 设置开始位置 和旋转 
                     Instantiate(BulletPrefab, FirePoint.position, FirePoint.rotation);//实例化子弹 初始化
-
+                    GunShake.GenerateImpulse();//枪震动
                 }
                 break;
             case GunType.SubmachineGun:
@@ -64,17 +64,28 @@ public class Gun : MonoBehaviour
                     ReloadTime = ReloadTimer;//重置计时器
                                              //实例化子弹 设置开始位置 和旋转 
                     Instantiate(BulletPrefab, FirePoint.position, FirePoint.rotation);//实例化子弹 初始化
-
+                    GunShake.GenerateImpulse();//枪震动
                 }
                 break;
             case GunType.Shotgun:
-                
+                ReloadTimer = 1f;//霰弹枪发射间隔1秒
+                if (Input.GetMouseButtonDown(0))//鼠标左键按下
+                {
+                    ReloadTime = ReloadTimer;//重置计时器
+                    //霰弹枪发射5颗子弹，模拟散射效果
+                    for (int i = 0; i < 5; i++)
+                    {
+                        //计算每颗子弹的偏移角度
+                        float spreadAngle = Random.Range(-10f, 10f);
+                        Quaternion spreadRotation = Quaternion.Euler(FirePoint.rotation.eulerAngles + new Vector3(0, spreadAngle, 0));
+                        //实例化子弹 设置开始位置 和旋转 
+                        Instantiate(BulletPrefab, FirePoint.position, spreadRotation);//实例化子弹 初始化
+                    }
+                }
+
                 break;
         }
         GunAudio.PlayOneShot(ShootClip);//播放开火音效
-        GunShake.GenerateImpulse();//枪震动
-        //sssss
-        //llll
 
     }
 }

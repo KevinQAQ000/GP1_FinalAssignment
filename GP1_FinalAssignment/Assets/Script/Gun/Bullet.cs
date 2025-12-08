@@ -12,6 +12,7 @@ public class Bullet : MonoBehaviour
     {
         
             Rigidbody.linearVelocity = transform.forward * Speed;// 直线速度 自动往前方飞
+            Destroy(gameObject, 3f); //3秒后销毁子弹，防止内存泄漏
 
     }
     
