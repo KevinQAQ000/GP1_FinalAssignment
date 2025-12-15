@@ -85,7 +85,7 @@ public class Gun : MonoBehaviour
 
                 break;
         }
-        GunAudio.PlayOneShot(ShootClip);//播放开火音效
+        //GunAudio.PlayOneShot(ShootClip);//播放开火音效
 
     }
 }
