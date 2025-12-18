@@ -32,6 +32,7 @@ public class PlayerController : MonoBehaviour
     public bool isGround;//是否在地面
     public bool isCanCrouch;//是否可以蹲伏
     public bool isCouching;//是否正在蹲伏
+    public bool isBlocked;//是否被阻挡
 
     public LayerMask crouchLayerMask;//地面图层
 
@@ -42,7 +43,7 @@ public class PlayerController : MonoBehaviour
         runSpeed = 8f;
         jumpForce = 0f;
         fallForce = 10f;
-        crouchSpeed = 2f;
+        crouchSpeed = 3f;
         crouchHeight = 1.2f;
         standHeight = characterController .height;
     }
@@ -50,14 +51,22 @@ public class PlayerController : MonoBehaviour
 
     void Update()//60
     {
-        CanCrouch();
-        if(Input.GetKey(crouchInputName))
+        isCanCrouch = CanCrouch();//判断是否可以蹲伏
+        if (Input.GetKey(crouchInputName))
         {
-            Crouch(false);
+            Crouch(true);
         }
         else
         {
-            Crouch(true);
+            if (isCanCrouch)
+            {
+                Crouch(false);
+            }
+            else
+            {
+                // 被卡住了，維持蹲下狀態
+                isCouching = true;
+            }
         }
         Jump();
         Moving();
@@ -75,7 +84,7 @@ public class PlayerController : MonoBehaviour
 
         isRun = Input.GetKey(runInputName);//获取奔跑按键输入
         isWalk = (Mathf.Abs(h) > 0 || Mathf.Abs(v) > 0) ? true : false;//判断是否行走
-        if (isRun && isGround)
+        if (isRun && isGround && isCanCrouch && isCouching)
         {
             state = MovementState.Running;
             Speed = runSpeed;//奔跑速度
@@ -84,6 +93,10 @@ public class PlayerController : MonoBehaviour
         {
             state = MovementState.Walking;
             Speed = walkSpeed;//行走速度
+            if (isCouching)
+            {
+                Speed = crouchSpeed;//蹲伏速度
+            }
         }
 
         //transform.right  * h + transform.forward * v;//根据输入方向移动
@@ -96,30 +109,37 @@ public class PlayerController : MonoBehaviour
 
     public void Jump()//人物跳跃方法
     {
-        //待补充
-        isJump = Input.GetKeyDown(jumpInputName);//获取跳跃按键输入
-        if (isJump && isGround)//判断是否跳跃
+        if (isBlocked)
         {
-            isGround = false;
-            jumpForce = 5f;//跳跃力度
+            return;
         }
-        if (!isGround)
+        else
         {
-            jumpForce -= fallForce * Time.deltaTime;//下落速度
-            Vector3 jump = new Vector3(0, jumpForce, 0);//将跳跃力度转换成V3坐标
-            collisionFlags = characterController.Move(jump * Time.deltaTime);//调用角色控制器移动方法，向上移动模拟跳跃
-
-            if (collisionFlags == CollisionFlags.Below)//判断是否落地
-            {
-                isGround = true;
-                jumpForce = 0f;
-            }
-            if (isGround && collisionFlags == CollisionFlags.None)//防止跳跃过程中落地后继续下落
+            isJump = Input.GetKeyDown(jumpInputName);//获取跳跃按键输入
+            if (isJump && isGround)//判断是否跳跃
             {
                 isGround = false;
+                jumpForce = 5f;//跳跃力度
             }
+            if (!isGround)
+            {
+                jumpForce -= fallForce * Time.deltaTime;//下落速度
+                Vector3 jump = new Vector3(0, jumpForce, 0);//将跳跃力度转换成V3坐标
+                collisionFlags = characterController.Move(jump * Time.deltaTime);//调用角色控制器移动方法，向上移动模拟跳跃
 
+                if (collisionFlags == CollisionFlags.Below)//判断是否落地
+                {
+                    isGround = true;
+                    jumpForce = 0f;
+                }
+                if (isGround && collisionFlags == CollisionFlags.None)//防止跳跃过程中落地后继续下落
+                {
+                    isGround = false;
+                }
+                isJump = true;
+            }
         }
+            
     }
 
     /// <summary>
@@ -127,13 +147,23 @@ public class PlayerController : MonoBehaviour
     /// isCanCrouch = true 可以蹲伏
     /// isCanCrouch = false 不可以蹲伏 头顶有障碍物
     /// </summary>
-    public void CanCrouch()//是否可以蹲伏方法
+    public bool CanCrouch()//是否可以蹲伏方法 ?
     {
-        Vector3 shpereLocation = transform .position + Vector3.up * standHeight;//测试位置 在角色头顶位置
-        isCanCrouch = (Physics.OverlapSphere(shpereLocation, characterController.radius, crouchLayerMask).Length) == 0;//检测头顶是否有障碍物
+        // 檢測點：從腳底向上偏移（站立高度 - 球體半徑）
+        // 這樣球體正好位於站立時「頭部」的位置
+        Vector3 sphereLocation = transform.position + Vector3.up * (standHeight - characterController.radius);
 
-        //在场景视图中绘制一个球体，表示检测范围
-        Collider[] colliders = Physics.OverlapSphere(shpereLocation, characterController.radius, crouchLayerMask);
+        float checkRadius = characterController.radius * 1.2f;
+        //绘制出checkSphere检测范围
+        isBlocked = Physics.CheckSphere(sphereLocation, checkRadius, crouchLayerMask);
+
+        return !isBlocked; 
+
+        //Vector3 shpereLocation = transform .position + Vector3.up * standHeight;//测试位置 在角色头顶位置
+        //isCanCrouch = (Physics.OverlapSphere(shpereLocation, characterController.radius, crouchLayerMask).Length) == 0;//检测头顶是否有障碍物
+
+        ////在场景视图中绘制一个球体，表示检测范围
+        //Collider[] colliders = Physics.OverlapSphere(shpereLocation, characterController.radius, crouchLayerMask);
         //当这个球体与任何物体重叠时，说明头顶有障碍物
         //for (int i = 0; i < colliders.Length; i++)
         //{
@@ -143,10 +173,12 @@ public class PlayerController : MonoBehaviour
     }
     public void Crouch( bool newCrouching)//人物蹲伏方法
     {
-        if(!isCanCrouch) return;//如果不能站立则返回
+        //if(!isCanCrouch) return;//如果不能站立则返回
         isCouching = newCrouching;//设置是否蹲伏状态
-        characterController.height = isCouching ? standHeight : crouchHeight;//根据是否可以站立设置角色控制器高度
+        characterController.height = isCouching ? crouchHeight : standHeight;//根据是否可以站立设置角色控制器高度
         characterController.center = Vector3.up * (characterController.height / 2f);//根据角色控制器高度设置中心点位置
+        if (isCouching) 
+            state = MovementState.Crouching;
 
         //isCouching = Input.GetKey(crouchInputName);//获取蹲伏按键输入
         //if (isCouching)
@@ -174,6 +206,17 @@ public class PlayerController : MonoBehaviour
 
         // 画出这个球
         Gizmos.DrawWireSphere(shpereLocation, characterController.radius);
+
+        // 1. 设置颜色：如果头顶有障碍物变红，否则为绿
+        Gizmos.color = CanCrouch() ? Color.green : Color.red;
+
+        // 2. 计算检测球的位置 (必须与逻辑代码一致)
+        // 建议位置：脚底坐标 + 站立高度 - 球体半径
+        Vector3 sphereLocation = transform.position + Vector3.up * (standHeight - characterController.radius);
+
+        // 3. 画出检测范围
+        Gizmos.DrawWireSphere(sphereLocation, characterController.radius * 1.2f);
+
     }
 
 

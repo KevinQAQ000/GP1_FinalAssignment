@@ -240,6 +240,38 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
+--- !u!1 &139195077
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 139195078}
+  m_Layer: 0
+  m_Name: PivotPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &139195078
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 139195077}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1501023995}
+  m_Father: {fileID: 1212707380}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &228500225
 GameObject:
   m_ObjectHideFlags: 0
@@ -252,7 +284,7 @@ GameObject:
   - component: {fileID: 228500229}
   - component: {fileID: 228500228}
   - component: {fileID: 228500227}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Plate (6)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -546,7 +578,7 @@ GameObject:
   - component: {fileID: 832275775}
   - component: {fileID: 832275774}
   - component: {fileID: 832275773}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Plate (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -654,7 +686,7 @@ GameObject:
   - component: {fileID: 906151588}
   - component: {fileID: 906151587}
   - component: {fileID: 906151586}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Plate (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -890,6 +922,7 @@ GameObject:
   - component: {fileID: 1212707383}
   - component: {fileID: 1212707384}
   - component: {fileID: 1212707385}
+  - component: {fileID: 1212707386}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -910,8 +943,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1501023995}
   - {fileID: 1480956379}
+  - {fileID: 139195078}
   m_Father: {fileID: 1891248330}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &1212707383
@@ -980,9 +1013,24 @@ MonoBehaviour:
   isGround: 0
   isCanCrouch: 0
   isCouching: 0
+  isBlocked: 1
   crouchLayerMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
+--- !u!114 &1212707386
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1212707379}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03d318e9add108f4bba71507cb0bd92f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  PivotPoint: {fileID: 0}
+  smoothSpeed: 10
 --- !u!1 &1315181874
 GameObject:
   m_ObjectHideFlags: 0
@@ -995,7 +1043,7 @@ GameObject:
   - component: {fileID: 1315181877}
   - component: {fileID: 1315181876}
   - component: {fileID: 1315181875}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Plate
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1152,7 +1200,7 @@ GameObject:
   - component: {fileID: 1350977774}
   - component: {fileID: 1350977773}
   - component: {fileID: 1350977772}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Plate (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1168,8 +1216,8 @@ Transform:
   m_GameObject: {fileID: 1350977770}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -10.8, y: 2, z: -11.94}
-  m_LocalScale: {x: 6.421132, y: 1.0761521, z: 11.702357}
+  m_LocalPosition: {x: -10.8, y: 3.24, z: -11.94}
+  m_LocalScale: {x: 6.421132, y: 3.3940759, z: 11.702357}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2071978838}
@@ -1260,7 +1308,7 @@ GameObject:
   - component: {fileID: 1375234869}
   - component: {fileID: 1375234868}
   - component: {fileID: 1375234867}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Plate (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1403,6 +1451,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterController: {fileID: 1212707384}
   height: 2
+--- !u!1 &1484204266
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1484204267}
+  m_Layer: 0
+  m_Name: AWM
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1484204267
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484204266}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.37822872, y: 1.456905, z: 12.33722}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1501023994
 GameObject:
   m_ObjectHideFlags: 0
@@ -1415,7 +1494,7 @@ GameObject:
   - component: {fileID: 1501023997}
   - component: {fileID: 1501023996}
   m_Layer: 0
-  m_Name: Capsule
+  m_Name: Body
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1434,7 +1513,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1212707380}
+  m_Father: {fileID: 139195078}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &1501023996
 MeshRenderer:
@@ -1595,7 +1674,7 @@ GameObject:
   - component: {fileID: 1899588665}
   - component: {fileID: 1899588664}
   - component: {fileID: 1899588663}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Plate (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1703,7 +1782,7 @@ GameObject:
   - component: {fileID: 1998769242}
   - component: {fileID: 1998769241}
   - component: {fileID: 1998769240}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Plate (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1808,7 +1887,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2071978838}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Emvironment
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2049,4 +2128,5 @@ SceneRoots:
   - {fileID: 8137421894250597752}
   - {fileID: 595344687}
   - {fileID: 8393981669942588039}
+  - {fileID: 1484204267}
   - {fileID: 1891248330}
