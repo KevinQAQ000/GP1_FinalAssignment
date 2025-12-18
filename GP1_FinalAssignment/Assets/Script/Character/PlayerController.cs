@@ -5,7 +5,7 @@ using UnityEngine;
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
-    private CharacterController characterController;//获取角色控制器组件
+    public CharacterController characterController;//获取角色控制器组件
     public Vector3 moveDirection;//人物移动方向
 
     [Header("玩家数值")]
@@ -15,6 +15,8 @@ public class PlayerController : MonoBehaviour
     public float crouchSpeed;//蹲伏速度
     public float jumpForce;//跳跃力度
     public float fallForce;//下落速度
+    public float crouchHeight;//蹲伏高度
+    public float standHeight;//站立高度
 
     [Header("键位设置")]
     public KeyCode runInputName = KeyCode.LeftShift;//奔跑按键
@@ -28,7 +30,10 @@ public class PlayerController : MonoBehaviour
     public bool isRun;//是否奔跑
     public bool isJump;//是否跳跃
     public bool isGround;//是否在地面
-    public bool isCrouch;//是否蹲伏
+    public bool isCanCrouch;//是否可以蹲伏
+    public bool isCouching;//是否正在蹲伏
+
+    public LayerMask crouchLayerMask;//地面图层
 
     void Start()
     {
@@ -38,11 +43,22 @@ public class PlayerController : MonoBehaviour
         jumpForce = 0f;
         fallForce = 10f;
         crouchSpeed = 2f;
+        crouchHeight = 1.2f;
+        standHeight = characterController .height;
     }
 
 
     void Update()//60
     {
+        CanCrouch();
+        if(Input.GetKey(crouchInputName))
+        {
+            Crouch(false);
+        }
+        else
+        {
+            Crouch(true);
+        }
         Jump();
         Moving();
     }
@@ -104,6 +120,60 @@ public class PlayerController : MonoBehaviour
             }
 
         }
+    }
+
+    /// <summary>
+    /// 判断是否可以蹲伏
+    /// isCanCrouch = true 可以蹲伏
+    /// isCanCrouch = false 不可以蹲伏 头顶有障碍物
+    /// </summary>
+    public void CanCrouch()//是否可以蹲伏方法
+    {
+        Vector3 shpereLocation = transform .position + Vector3.up * standHeight;//测试位置 在角色头顶位置
+        isCanCrouch = (Physics.OverlapSphere(shpereLocation, characterController.radius, crouchLayerMask).Length) == 0;//检测头顶是否有障碍物
+
+        //在场景视图中绘制一个球体，表示检测范围
+        Collider[] colliders = Physics.OverlapSphere(shpereLocation, characterController.radius, crouchLayerMask);
+        //当这个球体与任何物体重叠时，说明头顶有障碍物
+        //for (int i = 0; i < colliders.Length; i++)
+        //{
+        //    Debug.Log(colliders[i].name);
+        //}
+        //Debug.Log(shpereLocation);
+    }
+    public void Crouch( bool newCrouching)//人物蹲伏方法
+    {
+        if(!isCanCrouch) return;//如果不能站立则返回
+        isCouching = newCrouching;//设置是否蹲伏状态
+        characterController.height = isCouching ? standHeight : crouchHeight;//根据是否可以站立设置角色控制器高度
+        characterController.center = Vector3.up * (characterController.height / 2f);//根据角色控制器高度设置中心点位置
+
+        //isCouching = Input.GetKey(crouchInputName);//获取蹲伏按键输入
+        //if (isCouching)
+        //{
+        //    state = MovementState.Crouching;
+        //    Speed = crouchSpeed;//蹲伏速度
+        //    characterController.height = crouchHeight;//设置角色控制器高度为蹲伏高度
+        //}
+        //else
+        //{
+        //    if (isCanCrouch)//判断是否可以站立
+        //    {
+        //        characterController.height = standHeight;//设置角色控制器高度为站立高度
+        //    }
+        //}
+    }
+
+    private void OnDrawGizmos()//检测范围
+    {
+        // 设置颜色
+        Gizmos.color = Color.blue;
+
+        // 计算位置
+        Vector3 shpereLocation = transform.position + Vector3.up * standHeight;
+
+        // 画出这个球
+        Gizmos.DrawWireSphere(shpereLocation, characterController.radius);
     }
 
 
