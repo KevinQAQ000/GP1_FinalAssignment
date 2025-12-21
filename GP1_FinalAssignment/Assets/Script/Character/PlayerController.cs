@@ -7,6 +7,7 @@ public class PlayerController : MonoBehaviour
 {
     public CharacterController characterController;//获取角色控制器组件
     public Vector3 moveDirection;//人物移动方向
+    private AudioSource audioSource;//音频源组件
 
     [Header("玩家数值")]
     public float Speed;//默认速度
@@ -36,9 +37,14 @@ public class PlayerController : MonoBehaviour
 
     public LayerMask crouchLayerMask;//地面图层
 
+    [Header("音效")]
+    public AudioClip walkSound;//行走音效
+    public AudioClip runSound;//奔跑音效
+
     void Start()
     {
         characterController = GetComponent<CharacterController>();//获取角色控制器组件
+        audioSource = GetComponent<AudioSource>();//获取音频源组件
         walkSpeed = 4f;
         runSpeed = 8f;
         jumpForce = 0f;
@@ -69,6 +75,7 @@ public class PlayerController : MonoBehaviour
             }
         }
         Jump();
+        PlayerFootSoundSet();
         Moving();
     }
     private void FixedUpdate()//50
@@ -84,19 +91,37 @@ public class PlayerController : MonoBehaviour
 
         isRun = Input.GetKey(runInputName);//获取奔跑按键输入
         isWalk = (Mathf.Abs(h) > 0 || Mathf.Abs(v) > 0) ? true : false;//判断是否行走
-        if (isRun && isGround && isCanCrouch && isCouching)
+        if (isGround)
         {
-            state = MovementState.Running;
-            Speed = runSpeed;//奔跑速度
-        }
-        else if (isGround)
-        {
-            state = MovementState.Walking;
-            Speed = walkSpeed;//行走速度
+            // 优先级：蹲下 > 奔跑 > 走路
             if (isCouching)
             {
-                Speed = crouchSpeed;//蹲伏速度
+                state = MovementState.Crouching;
+                Speed = crouchSpeed;
             }
+            else if (isRun) // 只有在没蹲下且按住Shift时奔跑
+            {
+                state = MovementState.Running;
+                Speed = runSpeed;
+            }
+            else
+            {
+                state = MovementState.Walking;
+                Speed = walkSpeed;
+            }
+            //if (isRun && isGround)
+            //{
+            //    state = MovementState.Running;
+            //    Speed = runSpeed;//奔跑速度
+            //}
+            //else if (isGround)
+            //{
+            //    state = MovementState.Walking;
+            //    Speed = walkSpeed;//行走速度
+            //    if (isCouching)
+            //    {
+            //        Speed = crouchSpeed;//蹲伏速度
+            //    }
         }
 
         //transform.right  * h + transform.forward * v;//根据输入方向移动
@@ -219,6 +244,30 @@ public class PlayerController : MonoBehaviour
 
     }
 
+    /// <summary>
+    /// 移动音效设置
+    /// </summary>
+    public void PlayerFootSoundSet()
+    {
+        //sqrMagnitude 是将向量的长度平方后返回 V3转换成平方值
+        if (isGround && moveDirection.sqrMagnitude > 0)
+        {
+            audioSource.clip = isRun ? runSound : walkSound;//根据是否奔跑设置音效
+            if (!audioSource.isPlaying)//如果音效没有播放
+            {
+                audioSource.Play();//播放音效
+            }
+            
+        }
+        else//如果不在地面或者没有移动
+        {
+            if (audioSource.isPlaying)//如果音效正在播放
+            {
+                audioSource.Pause();
+            }
+        }
+
+    }
 
     public enum MovementState//人物移动状态
     {
