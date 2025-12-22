@@ -81,11 +81,17 @@ public class Gun : MonoBehaviour
                         //实例化子弹 设置开始位置 和旋转 
                         Instantiate(BulletPrefab, FirePoint.position, spreadRotation);//实例化子弹 初始化
                     }
+                    GunShake.GenerateImpulse();//枪震动
                 }
 
                 break;
         }
         //GunAudio.PlayOneShot(ShootClip);//播放开火音效
+        //枪械震动
 
     }
+    //public void Explode()//枪械震动
+    //{
+    //    GunShake.GenerateImpulse();
+    //}
 }

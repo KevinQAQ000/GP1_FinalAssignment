@@ -29,7 +29,7 @@ public class MouseLook : MonoBehaviour
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;//获取鼠标Y轴输入，上下
 
         yRotation -= mouseY;//摄像机垂直旋转角度 将上下旋转的轴累计
-        yRotation = Mathf.Clamp(yRotation, -80f, 80f);//限制摄像机垂直旋转角度，防止过度旋转
+        yRotation = Mathf.Clamp(yRotation, -60f, 60f);//限制摄像机垂直旋转角度，防止过度旋转
         transform.localRotation = Quaternion.Euler(yRotation, 0f, 0f);//设置摄像机的局部旋转，只影响上下旋转
         playerBody.Rotate(Vector3.up * mouseX);//让玩家身体绕Y轴旋转，实现左右旋转
 

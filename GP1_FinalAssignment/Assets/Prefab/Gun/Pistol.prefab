@@ -476,10 +476,7 @@ MonoBehaviour:
   GunAudio: {fileID: 8594568794476423452}
   ShootClip: {fileID: 0}
   GunShake: {fileID: 5246227042073519102}
-  pistol: 0
-  rifle: 0
-  submachineGun: 0
-  shotgun: 0
+  gunType: 0
 --- !u!114 &5246227042073519102
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -494,7 +491,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_ImpulseDefinition:
     m_ImpulseChannel: 1
-    m_ImpulseShape: 2
+    m_ImpulseShape: 3
     m_CustomImpulseShape:
       serializedVersion: 2
       m_Curve: []
@@ -532,7 +529,7 @@ MonoBehaviour:
     m_DissipationMode: 2
     m_DissipationDistance: 100
     m_PropagationSpeed: 343
-  m_DefaultVelocity: {x: 0, y: -1, z: 0}
+  m_DefaultVelocity: {x: 0, y: -0.1, z: 0}
 --- !u!1 &4329059692381898216
 GameObject:
   m_ObjectHideFlags: 0

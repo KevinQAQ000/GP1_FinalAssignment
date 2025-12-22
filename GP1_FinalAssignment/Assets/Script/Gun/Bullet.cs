@@ -4,7 +4,7 @@ public class Bullet : MonoBehaviour
 {
 
     public Rigidbody Rigidbody;
-    [Range(0f, 100f)]
+    [Range(0f, 500f)]
     public float Speed = 10f; // Speed of the bullet
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
