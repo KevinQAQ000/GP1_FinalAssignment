@@ -129,7 +129,7 @@ public class AutomaticGun : Weapon
         }
 
         //腰射和瞄准射击的扩散因子不同
-        SpreadFactor = 0.1f;//设置扩散因子
+        SpreadFactor = 0.01f;//设置扩散因子
 
         if (Input.GetMouseButton(0) && currentBullets > 0 && !isReloading)//按住鼠标左键射击
         {
@@ -174,6 +174,15 @@ public class AutomaticGun : Weapon
             
             //销毁子弹
             Destroy(bullet.gameObject, 3f);
+
+            Target target = hit.collider.GetComponent<Target>();
+            if (target != null)
+            {
+                // 调用之前在 Target 脚本里写好的 TakeDamage 方法
+                // 伤害值使用你脚本中定义的 damage 变量，并传入击中点 hit.point
+                target.TakeDamage(damage, hit.point);
+            }
+
             Debug.Log("Hit " + hit.collider.name);
         }
 
@@ -281,16 +290,16 @@ public class AutomaticGun : Weapon
         if (isReloading) yield break;
         isReloading = true;
 
-        // 记录初始位置，确保动画结束后能精准复位
+        //记录初始位置，确保动画结束后能精准复位
         Vector3 originalMagPos = magazineObj.localPosition;
         Quaternion originalMagRot = magazineObj.localRotation;
         Vector3 originalBoltPos = boltObj.localPosition;
 
-        // --- 步骤 1: 播放音效 1 ---
+        //播放音效 1
         mainAudioSource.PlayOneShot(soundClips.reloadSoundAmmotLeft);
         yield return new WaitForSeconds(1.0f);
 
-        // --- 步骤 2: 弹匣移出 (使用 SmoothStep 丝滑感) ---
+        //弹匣移出
         float elapsed = 0;
         while (elapsed < moveDuration)
         {
@@ -306,16 +315,16 @@ public class AutomaticGun : Weapon
 
         yield return new WaitForSeconds(0.15f);
 
-        // --- 步骤 3: 弹匣回位 (回位通常需要更有力、更顺滑) ---
+        //弹匣回位
         elapsed = 0;
-        float returnDuration = moveDuration * 0.8f; // 回位稍微快一点
-        mainAudioSource.PlayOneShot(soundClips.reloadSoundOutfAmmo); // 移回时立即播放音效2
+        float returnDuration = moveDuration * 0.8f; //回位稍微快一点
+        mainAudioSource.PlayOneShot(soundClips.reloadSoundOutfAmmo); //移回时立即播放音效2
 
         while (elapsed < returnDuration)
         {
             elapsed += Time.deltaTime;
             float t = elapsed / returnDuration;
-            // 采用 Sin 曲线，模拟快速插入后的减速停顿感
+            //采用 Sin 曲线，模拟快速插入后的减速停顿感
             t = Mathf.Sin(t * Mathf.PI * 0.5f);
 
             magazineObj.localPosition = Vector3.Lerp(originalMagPos + magRelPos, originalMagPos, t);
@@ -323,13 +332,13 @@ public class AutomaticGun : Weapon
             yield return null;
         }
 
-        // --- 步骤 4: 等待扳机动作 ---
+        //等待扳机动作
         yield return new WaitForSeconds(2f);
 
-        // --- 步骤 5: 扳机/拉栓动作 (模拟机械碰撞感) ---
+        //扳机/拉栓动作
         Vector3 targetBoltPos = originalBoltPos + new Vector3(0, 0, -0.5f);
 
-        // 1. 向后拉 (使用反向平方曲线，模拟拉力的阻碍感)
+        //向后拉 (使用反向平方曲线，模拟拉力的阻碍感)
         elapsed = 0;
         float pullBackTime = 0.15f;
         while (elapsed < pullBackTime)
@@ -340,42 +349,42 @@ public class AutomaticGun : Weapon
             yield return null;
         }
 
-        // 2. 弹回 (使用超快速度，模拟弹簧释放)
+        //弹回 (使用超快速度，模拟弹簧释放)
         elapsed = 0;
         float snapBackTime = 0.07f;
         while (elapsed < snapBackTime)
         {
             elapsed += Time.deltaTime;
             float t = elapsed / snapBackTime;
-            // 瞬间归位
+            //瞬间归位
             boltObj.localPosition = Vector3.Lerp(targetBoltPos, originalBoltPos, t);
             yield return null;
         }
 
-        // 确保最终位置完全精准
+        //确保最终位置完全精准
         magazineObj.localPosition = originalMagPos;
         boltObj.localPosition = originalBoltPos;
 
-        // --- 步骤 6: 最终更新数值 ---
+        //最终更新数值 ---
         Reload();
         isReloading = false;
     }
     private IEnumerator BoltFireRoutine()
     {
-        // 1. 瞬间移动到后方（击发瞬间）
-        // 提示：如果不确定是哪个轴，请在 Inspector 里手动拖动拉栓看坐标变化
+        //瞬间移动到后方（击发瞬间）
+        //如果不确定是哪个轴，请在 Inspector 里手动拖动拉栓看坐标变化
         boltObj.localPosition = boltOriginalLocalPos + new Vector3(0, 0, boltShootOffset);
 
-        // 2. 停留极短时间（增加肉眼捕捉率）
+        //停留极短时间（增加肉眼捕捉率）
         yield return new WaitForSeconds(0.01f);
 
-        // 3. 丝滑回位
+        //丝滑回位
         float elapsed = 0;
         while (elapsed < returnTime)
         {
             elapsed += Time.deltaTime;
             float t = elapsed / returnTime;
-            // 使用 EaseOut 曲线，回位更清脆
+            //使用 EaseOut 曲线，回位更清脆
             boltObj.localPosition = Vector3.Lerp(boltObj.localPosition, boltOriginalLocalPos, t);
             yield return null;
         }

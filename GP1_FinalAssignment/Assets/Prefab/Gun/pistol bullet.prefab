@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5716331565364943429}
   - component: {fileID: 4715657451654290890}
   - component: {fileID: 6058997168305005863}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: bullet head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -98,7 +98,7 @@ GameObject:
   - component: {fileID: 7187718907145552559}
   - component: {fileID: 810901869391808482}
   - component: {fileID: 3742271494445374096}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: pistol bullet
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -288,7 +288,7 @@ GameObject:
   - component: {fileID: 5231490910035462437}
   - component: {fileID: 5137006483676855090}
   - component: {fileID: 800352213873138750}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: bullet body
   m_TagString: Untagged
   m_Icon: {fileID: 0}
