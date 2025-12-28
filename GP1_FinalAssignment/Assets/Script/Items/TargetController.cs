@@ -3,25 +3,24 @@ using System.Collections;
 
 public class Target : MonoBehaviour
 {
-    public float health = 100f;
-    private bool isDead = false;
+    public float health = 100f;// 初始血量
+    private bool isDead = false;// 是否已经倒下
     private Quaternion originalRotation; // 记录初始旋转
-    private float maxHealth = 100f;
+    private float maxHealth = 100f;// 最大血量
 
     void Start()
     {
         // 记录初始旋转，用于后续回正
-        originalRotation = transform.rotation;
-        maxHealth = health;
+        originalRotation = transform.rotation;//初始化旋转信息
+        maxHealth = health;//初始化最大血量
     }
 
-    // --- 核心方法：供你的射线脚本调用 ---
-    public void TakeDamage(float damage, Vector3 hitPoint)
+    public void TakeDamage(float damage, Vector3 hitPoint)//接收伤害的方法 传入伤害值和击中点
     {
         // 如果已经倒下了，就不再接收伤害
         if (isDead) return;
 
-        health -= damage;
+        health -= damage;//扣除血量 
         Debug.Log($"靶子被射线击中！扣除 {damage} 血量，剩余: {health}");
 
         if (health <= 0)
@@ -33,36 +32,36 @@ public class Target : MonoBehaviour
         }
     }
 
-    void Die(float hitZ)
+    void Die(float hitZ)//靶子倒下的方法 传入击中点的本地Z轴位置
     {
-        isDead = true;
+        isDead = true;//标记为已倒下
 
         // 逻辑：根据击中点的 Z 轴位置决定绕 X 轴倒下的方向
         // hitZ > 0 说明击中点在靶子前方，靶子往后倒 (-90度)
         float angle = hitZ > 0 ? -90f : 90f;
         Quaternion targetRotation = originalRotation * Quaternion.Euler(angle, 0, 0);
 
-        StopAllCoroutines();
-        StartCoroutine(HandleTargetCycle(targetRotation));
+        StopAllCoroutines();// 停止之前的协程，防止多次触发时出现冲突
+        StartCoroutine(HandleTargetCycle(targetRotation));// 启动协程处理倒下和回正的过程
     }
 
-    IEnumerator HandleTargetCycle(Quaternion targetRotation)
+    IEnumerator HandleTargetCycle(Quaternion targetRotation)//协程处理靶子倒下、等待和回正的过程
     {
-        // 1. 平滑倒下
+        //平滑倒下
         float elapsed = 0;
-        Quaternion startRotation = transform.rotation;
-        while (elapsed < 0.3f)
+        Quaternion startRotation = transform.rotation;//记录当前旋转
+        while (elapsed < 0.3f)//倒下过程持续0.3秒
         {
-            transform.rotation = Quaternion.Slerp(startRotation, targetRotation, elapsed / 0.3f);
+            transform.rotation = Quaternion.Slerp(startRotation, targetRotation, elapsed / 0.3f);//插值计算当前旋转
             elapsed += Time.deltaTime;
             yield return null;
         }
-        transform.rotation = targetRotation;
+        transform.rotation = targetRotation;//确保最终旋转精确
 
-        // 2. 等待 4 秒 (根据你的需求，之前是3秒，这里设为4)
+        //等待 4 秒 (根据你的需求，之前是3秒，这里设为4)
         yield return new WaitForSeconds(4f);
 
-        // 3. 平滑回正
+        //平滑回正
         elapsed = 0;
         Quaternion currentRotation = transform.rotation;
         while (elapsed < 0.5f)
@@ -73,7 +72,7 @@ public class Target : MonoBehaviour
         }
         transform.rotation = originalRotation;
 
-        // 4. 重置状态，准备下一次被击中
+        //重置状态，准备下一次被击中
         health = maxHealth;
         isDead = false;
         Debug.Log("靶子已复位。");

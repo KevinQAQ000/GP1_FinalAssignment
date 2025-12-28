@@ -19,6 +19,10 @@ public class AutomaticGun : Weapon
 {
     private PlayerController playerController;//玩家控制器
 
+    public bool IS_AUTORRIFLE;//是否为自动步枪
+    public bool IS_SEMIGUN;//是否为半自动手枪
+
+
     public Transform ShootPoint; // 射击点 射线打出的位置
     public Transform BulletShootPoint; // 子弹特效打出的位置
     public Transform CasingBulletSpawnPoint; // 弹壳生成的位置
@@ -72,11 +76,19 @@ public class AutomaticGun : Weapon
     public Text shootModeTextUI;//射击模式UI文本
 
     public PlayerController.MovementState state;//玩家移动状态
+    private bool isAiming;//是否在瞄准状态
+    private Vector3 sniperingRiflePosition; //枪的初始位置
+    public Vector3 sniperingRifleOnPosition; //瞄准时枪的位置
+
 
     [Header("键位设置")]
-    private KeyCode reloadInputName = KeyCode.R;//换弹键位
-
-    private string shootModeName;//射击模式名称
+    public KeyCode reloadInputName = KeyCode.R;//换弹键位
+    public KeyCode inspectInputName = KeyCode.I;//检视键位
+    public KeyCode GunShootModeInputName = KeyCode.B;//射击模式切换键位,自动 半自动
+    public ShootMode shootingName;//射击模式名称
+    private bool GunShootInput;//射击模式切换输入
+    private int modeNum;//射击模式编号
+    private string shootModeName;//射击模式名称显示
 
     private bool isReloading = false; // 是否正在换弹中
 
@@ -88,20 +100,74 @@ public class AutomaticGun : Weapon
 
     private void Start()//初始化
     {
+        sniperingRiflePosition = transform.localPosition;//记录枪的初始位置
         muzzleFlashLight.enabled = false;//枪口光初始关闭
         crossExpandDegree = 20f;//初始准心扩展值
         maxExpandingDegree = 60f;//最大准心扩展值
         lightDuraing = 0.03f;//枪口光持续时间
         range = 300f;
-        bulletForce = 200f;
+        bulletForce = 400f;
         BulletLeft = bulletMag * 5;//初始备用子弹数量为弹匣容量的5倍
         currentBullets = bulletMag;//初始当前弹匣子弹数量为弹匣容量
         boltOriginalLocalPos = boltObj.localPosition;//记录拉栓初始位置
+        fireTimer = fireRate;
+
+        //根据不同枪械类型设置射击模式
+        if (IS_AUTORRIFLE)
+        {
+            modeNum = 1;
+            shootModeName = "Automatic";
+            shootingName = ShootMode.AutoRifle;
+            UpdateAmmoUI();
+
+        }
+        else if (IS_SEMIGUN)
+        {
+            modeNum = 0;
+            shootModeName = "SemiAuto";
+            shootingName = ShootMode.SemiGun;
+            UpdateAmmoUI();
+        }
 
     }
 
     private void Update()
     {
+        if(IS_AUTORRIFLE)
+        {
+            //自动步枪射击模式切换
+            if (Input.GetKeyDown(GunShootModeInputName) && modeNum != 1)//按下射击模式切换键
+            {
+                modeNum = 1;
+                shootModeName = "Automatic";
+                shootingName = ShootMode.AutoRifle;
+                UpdateAmmoUI();
+            }
+            else if (Input.GetKeyDown(GunShootModeInputName) && modeNum != 0)
+            {
+                modeNum = 0;
+                shootModeName = "SemiAuto";
+                shootingName = ShootMode.SemiGun;
+                UpdateAmmoUI();
+            }
+            switch (shootingName)
+            {
+                case ShootMode.AutoRifle://半自动
+                    GunShootInput = Input.GetMouseButton(0);//按住鼠标左键射击
+                    fireRate = 0.2f;
+                    break;
+                case ShootMode.SemiGun://自动
+                    GunShootInput = Input.GetMouseButtonDown(0);//按下鼠标左键射击
+                    fireRate = 0.15f;
+                    break;
+            }
+        }
+
+        else
+        {
+            GunShootInput = Input.GetMouseButtonDown(0);
+        }
+
         state = playerController.state;//获取玩家当前移动状态
         if(state == PlayerController.MovementState.Walking 
             && Vector3.SqrMagnitude(playerController.moveDirection)>0
@@ -121,24 +187,37 @@ public class AutomaticGun : Weapon
             ExpaningCrossUpdate(crossExpandDegree);
         }
 
-        //按下换弹键 当前子弹匣子弹数量小于弹匣容量且备用子弹数量大于0时换弹
-        if (Input.GetKeyDown(reloadInputName) && currentBullets < bulletMag && BulletLeft > 0)
-        {
-            // 启动换弹协程
-            StartCoroutine(ReloadRoutine());
-        }
-
-        //腰射和瞄准射击的扩散因子不同
-        SpreadFactor = 0.01f;//设置扩散因子
-
-        if (Input.GetMouseButton(0) && currentBullets > 0 && !isReloading)//按住鼠标左键射击
+        if(GunShootInput && currentBullets > 0)
         {
             GunFire();//调用射击方法
         }
-        //计时器
+        
         if (fireTimer < fireRate)//如果计时器小于射速
         {
             fireTimer += Time.deltaTime;//计时器增加时间
+        }
+
+        if (Input.GetKeyDown(reloadInputName) && currentBullets < bulletMag && BulletLeft > 0 && !isReloading)//按下换弹键
+        {
+            StartCoroutine(ReloadRoutine());//调用换弹携程
+        }
+
+        //右键瞄准逻辑
+        if (Input.GetMouseButton(1) && !isReloading && !playerController.isRun)//按下检视键
+        {
+            isAiming = true;
+            transform.localPosition = sniperingRifleOnPosition;//设置枪的位置为瞄准位置
+        }
+        else
+        {
+            isAiming = false;
+            transform.localPosition = sniperingRiflePosition;//设置枪的位置为初始位置
+        }
+        SpreadFactor = isAiming ? 0.01f : 0.1f;//根据是否瞄准设置射击扩散因子
+
+        if (Input.GetKeyDown(inspectInputName))
+        {
+            
         }
 
     }
@@ -161,21 +240,35 @@ public class AutomaticGun : Weapon
         StartCoroutine(Shoot_Cross());//调用射击准心扩展携程
 
         RaycastHit hit;//射线检测的返回信息
-        Vector3 shootDirection = ShootPoint.forward;
+        //Vector3 shootDirection = ShootPoint.forward;
         //下面的代码是实现射击的散射效果
-        shootDirection = shootDirection + ShootPoint.TransformDirection(new Vector3(Random.Range(-SpreadFactor, SpreadFactor), Random.Range(-SpreadFactor, SpreadFactor)));
+        //shootDirection = shootDirection + ShootPoint.TransformDirection(new Vector3(Random.Range(-SpreadFactor, SpreadFactor), Random.Range(-SpreadFactor, SpreadFactor)));
+        // --- 修改后的射击偏移逻辑 ---
+        // 生成一个基于 SpreadFactor 的随机偏移量
+        //float xSpread = Random.Range(-SpreadFactor, SpreadFactor);
+        //float ySpread = Random.Range(-SpreadFactor, SpreadFactor);
+
+        // 使用 Quaternion 旋转 ShootPoint 的正前方，这样可以确保偏移永远是相对于枪口准心的
+        //Vector3 shootDirection = Quaternion.Euler(xSpread * 100f, ySpread * 100f, 0) * ShootPoint.forward;
+        Vector3 offset = ShootPoint.right * Random.Range(-SpreadFactor, SpreadFactor) +
+                 ShootPoint.up * Random.Range(-SpreadFactor, SpreadFactor);
+
+        // 将偏移累加到前方向量，并归一化
+        Vector3 shootDirection = (ShootPoint.forward + offset).normalized;
+        // -----------------------
         //发出射线 检测是否击中物体
         if (Physics.Raycast(ShootPoint.position, shootDirection, out hit,range))
         {
             Transform bullet;
 
             bullet = Instantiate(bulletPrefab, BulletShootPoint.position, BulletShootPoint.rotation);//实例化子弹特效
-            bullet.GetComponent<Rigidbody>().linearVelocity = (bullet.transform.forward + shootDirection) * bulletForce;//给子弹特效一个速度
-            
+            //bullet.GetComponent<Rigidbody>().linearVelocity = (bullet.transform.forward + shootDirection) * bulletForce;//给子弹特效一个速度
+            bullet.GetComponent<Rigidbody>().linearVelocity = shootDirection * bulletForce;
+
             //销毁子弹
             Destroy(bullet.gameObject, 3f);
 
-            Target target = hit.collider.GetComponent<Target>();
+            Target target = hit.collider.GetComponent<Target>();//尝试获取被击中物体上的 Target 脚本组件
             if (target != null)
             {
                 // 调用之前在 Target 脚本里写好的 TakeDamage 方法
@@ -390,4 +483,11 @@ public class AutomaticGun : Weapon
         }
         boltObj.localPosition = boltOriginalLocalPos;
     }
+
+    public enum ShootMode
+    {
+        AutoRifle,
+        SemiGun
+    }
+
 }
