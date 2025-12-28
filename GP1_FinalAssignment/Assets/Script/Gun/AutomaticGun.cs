@@ -79,6 +79,7 @@ public class AutomaticGun : Weapon
     private bool isAiming;//是否在瞄准状态
     private Vector3 sniperingRiflePosition; //枪的初始位置
     public Vector3 sniperingRifleOnPosition; //瞄准时枪的位置
+    public float aimSpeed = 10f; // 瞄准速度，数值越大越快
 
 
     [Header("键位设置")]
@@ -106,7 +107,7 @@ public class AutomaticGun : Weapon
         maxExpandingDegree = 60f;//最大准心扩展值
         lightDuraing = 0.03f;//枪口光持续时间
         range = 300f;
-        bulletForce = 400f;
+        bulletForce = 800f;
         BulletLeft = bulletMag * 5;//初始备用子弹数量为弹匣容量的5倍
         currentBullets = bulletMag;//初始当前弹匣子弹数量为弹匣容量
         boltOriginalLocalPos = boltObj.localPosition;//记录拉栓初始位置
@@ -152,13 +153,13 @@ public class AutomaticGun : Weapon
             }
             switch (shootingName)
             {
-                case ShootMode.AutoRifle://半自动
+                case ShootMode.AutoRifle://自动步枪模式
                     GunShootInput = Input.GetMouseButton(0);//按住鼠标左键射击
-                    fireRate = 0.2f;
+                    fireRate = 0.13f;
                     break;
-                case ShootMode.SemiGun://自动
+                case ShootMode.SemiGun://半自动模式
                     GunShootInput = Input.GetMouseButtonDown(0);//按下鼠标左键射击
-                    fireRate = 0.15f;
+                    fireRate = 0.2f;
                     break;
             }
         }
@@ -187,7 +188,7 @@ public class AutomaticGun : Weapon
             ExpaningCrossUpdate(crossExpandDegree);
         }
 
-        if(GunShootInput && currentBullets > 0)
+        if(GunShootInput && currentBullets > 0 && !isReloading)
         {
             GunFire();//调用射击方法
         }
@@ -206,14 +207,15 @@ public class AutomaticGun : Weapon
         if (Input.GetMouseButton(1) && !isReloading && !playerController.isRun)//按下检视键
         {
             isAiming = true;
-            transform.localPosition = sniperingRifleOnPosition;//设置枪的位置为瞄准位置
+            transform.localPosition = Vector3.Lerp(transform.localPosition, sniperingRifleOnPosition, Time.deltaTime * aimSpeed);//设置枪的位置为瞄准位置
         }
         else
         {
             isAiming = false;
-            transform.localPosition = sniperingRiflePosition;//设置枪的位置为初始位置
+            transform.localPosition = Vector3.Lerp(transform.localPosition, sniperingRiflePosition, Time.deltaTime * aimSpeed);//设置枪的位置为初始位置
         }
-        SpreadFactor = isAiming ? 0.01f : 0.1f;//根据是否瞄准设置射击扩散因子
+        //
+        SpreadFactor = isAiming ? 0.001f : 0.05f;//根据是否瞄准设置射击扩散因子
 
         if (Input.GetKeyDown(inspectInputName))
         {
@@ -240,22 +242,33 @@ public class AutomaticGun : Weapon
         StartCoroutine(Shoot_Cross());//调用射击准心扩展携程
 
         RaycastHit hit;//射线检测的返回信息
-        //Vector3 shootDirection = ShootPoint.forward;
-        //下面的代码是实现射击的散射效果
-        //shootDirection = shootDirection + ShootPoint.TransformDirection(new Vector3(Random.Range(-SpreadFactor, SpreadFactor), Random.Range(-SpreadFactor, SpreadFactor)));
-        // --- 修改后的射击偏移逻辑 ---
-        // 生成一个基于 SpreadFactor 的随机偏移量
-        //float xSpread = Random.Range(-SpreadFactor, SpreadFactor);
-        //float ySpread = Random.Range(-SpreadFactor, SpreadFactor);
+                       //Vector3 shootDirection = ShootPoint.forward;
+                       //下面的代码是实现射击的散射效果
+                       //shootDirection = shootDirection + ShootPoint.TransformDirection(new Vector3(Random.Range(-SpreadFactor, SpreadFactor), Random.Range(-SpreadFactor, SpreadFactor)));
+                       // --- 修改后的射击偏移逻辑 ---
+                       // 生成一个基于 SpreadFactor 的随机偏移量
+                       //float xSpread = Random.Range(-SpreadFactor, SpreadFactor);
+                       //float ySpread = Random.Range(-SpreadFactor, SpreadFactor);
 
         // 使用 Quaternion 旋转 ShootPoint 的正前方，这样可以确保偏移永远是相对于枪口准心的
         //Vector3 shootDirection = Quaternion.Euler(xSpread * 100f, ySpread * 100f, 0) * ShootPoint.forward;
-        Vector3 offset = ShootPoint.right * Random.Range(-SpreadFactor, SpreadFactor) +
-                 ShootPoint.up * Random.Range(-SpreadFactor, SpreadFactor);
+        //Vector3 offset = ShootPoint.right * Random.Range(-SpreadFactor, SpreadFactor) +
+        //         ShootPoint.up * Random.Range(-SpreadFactor, SpreadFactor);
 
-        // 将偏移累加到前方向量，并归一化
-        Vector3 shootDirection = (ShootPoint.forward + offset).normalized;
+        //// 将偏移累加到前方向量，并归一化
+        //Vector3 shootDirection = (ShootPoint.forward + offset).normalized;
+        // 计算随机的角度偏移（数值根据 SpreadFactor 调整，这里乘以一个系数来控制扩散弧度）
+        float xSpread = Random.Range(-SpreadFactor, SpreadFactor) * 50f;
+        float ySpread = Random.Range(-SpreadFactor, SpreadFactor) * 50f;
+
+        // 创建一个旋转增量
+        Quaternion spreadRotation = Quaternion.Euler(xSpread, ySpread, 0);
+
+        // 将这个旋转应用到 ShootPoint 的 forward 方向上
+        // 注意：顺序必须是 spreadRotation * ShootPoint.forward
+        Vector3 shootDirection = spreadRotation * ShootPoint.forward;
         // -----------------------
+        Debug.DrawRay(ShootPoint.position, shootDirection * 20f, Color.red, 2f);
         //发出射线 检测是否击中物体
         if (Physics.Raycast(ShootPoint.position, shootDirection, out hit,range))
         {

@@ -97,7 +97,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Rigidbody: {fileID: 810901869391808482}
-  Speed: 50
+  Speed: 5
   CasingAudioClip: {fileID: 8300000, guid: f21ce33ca814b554eb267015057eb749, type: 3}
 --- !u!82 &7479565664282752616
 AudioSource:
