@@ -9,6 +9,9 @@ public class PlayerController : MonoBehaviour
     public Vector3 moveDirection;//人物移动方向
     private AudioSource audioSource;//音频源组件
 
+    private float verticalVelocity; // 专门处理 y 轴的速度
+    private Vector3 airControlDirection; // 记录起跳瞬间的方向
+
     [Header("玩家数值")]
     public float Speed;//默认速度
     public float walkSpeed;//行走速度
@@ -58,6 +61,9 @@ public class PlayerController : MonoBehaviour
     void Update()//60
     {
         isCanCrouch = CanCrouch();//判断是否可以蹲伏
+        CheckGroundStatus(); // 优化后的地面检测
+        Vector3 finalMovement = CalculateMovement();
+        characterController.Move(finalMovement * Time.deltaTime);
         if (Input.GetKey(crouchInputName))
         {
             Crouch(true);
@@ -267,6 +273,61 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+    }
+
+    private void CheckGroundStatus()
+    {
+        // 使用 CharacterController 自带的 isGrounded 结合你的 collisionFlags
+        isGround = characterController.isGrounded || (collisionFlags & CollisionFlags.Below) != 0;
+    }
+
+    // 核心计算逻辑
+    private Vector3 CalculateMovement()
+    {
+        // --- 1. 处理水平输入 ---
+        float h = Input.GetAxisRaw("Horizontal");
+        float v = Input.GetAxisRaw("Vertical");
+        Vector3 inputDir = (transform.right * h + transform.forward * v).normalized;
+
+        // --- 2. 状态与速度判定 ---
+        isRun = Input.GetKey(runInputName);
+        if (isCouching) Speed = crouchSpeed;
+        else if (isRun) Speed = runSpeed;
+        else Speed = walkSpeed;
+
+        // --- 3. 核心分歧：地面 vs 空中 ---
+        Vector3 horizontalMove;
+
+        if (isGround)
+        {
+            // 在地面时，正常更新移动方向
+            horizontalMove = inputDir * Speed;
+
+            // 实时记录当前方向，准备为可能的跳跃做备份
+            airControlDirection = horizontalMove;
+
+            // 落地重置垂直速度（-2f 是为了让角色更稳地贴着地面/斜坡）
+            if (verticalVelocity < 0) verticalVelocity = -2f;
+
+            // 跳跃逻辑
+            if (Input.GetKeyDown(jumpInputName) && !isBlocked)
+            {
+                verticalVelocity = 10f; // 你的跳跃力度
+                isGround = false;
+            }
+        }
+        else
+        {
+            // 【关键点】在空中时，不使用 inputDir，而是使用起跳瞬间记录的方向
+            // 这样玩家在空中按 WASD 就不会改变飞行轨迹了
+            horizontalMove = airControlDirection;
+
+            // 持续计算重力
+            verticalVelocity -= fallForce * Time.deltaTime;
+        }
+
+        // --- 4. 合并最终向量 ---
+        return new Vector3(horizontalMove.x, verticalVelocity, horizontalMove.z);
     }
 
     public enum MovementState//人物移动状态

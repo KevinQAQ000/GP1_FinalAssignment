@@ -18,6 +18,10 @@ public class SoundClips
 public class AutomaticGun : Weapon
 {
     private PlayerController playerController;//玩家控制器
+    private Camera mainCamera;//主摄像机
+    public float normalFOV = 60f;// 正常视野
+    public float aimFOV = 40f;// 瞄准时的视野（越小越近）
+    public float fovSpeed = 10f;// FOV 变化速度
 
     public bool IS_AUTORRIFLE;//是否为自动步枪
     public bool IS_SEMIGUN;//是否为半自动手枪
@@ -30,6 +34,8 @@ public class AutomaticGun : Weapon
     [Header("子弹预制体和特效")]
     public Transform bulletPrefab; // 子弹预制体
     public Transform casingPrefab; // 弹壳预制体
+    public GameObject bulletHolePrefab; // 在Inspector面板拖入弹孔预制体
+    public float bulletHoleLifeTime = 5f; // 弹孔存在时间
 
     [Header("枪械属性")]
     public float range; // 射程
@@ -97,6 +103,9 @@ public class AutomaticGun : Weapon
     {
         playerController = GetComponentInParent<PlayerController>();//获取玩家控制器组件
         mainAudioSource = GetComponent<AudioSource>();
+        mainCamera = Camera.main;//获取主摄像机
+        if (mainCamera == null) mainCamera = Camera.main;
+        if (mainCamera != null) normalFOV = mainCamera.fieldOfView;
     }
 
     private void Start()//初始化
@@ -207,15 +216,23 @@ public class AutomaticGun : Weapon
         if (Input.GetMouseButton(1) && !isReloading && !playerController.isRun)//按下检视键
         {
             isAiming = true;
+            AimIn();
             transform.localPosition = Vector3.Lerp(transform.localPosition, sniperingRifleOnPosition, Time.deltaTime * aimSpeed);//设置枪的位置为瞄准位置
         }
         else
         {
             isAiming = false;
+            AimOut();
             transform.localPosition = Vector3.Lerp(transform.localPosition, sniperingRiflePosition, Time.deltaTime * aimSpeed);//设置枪的位置为初始位置
         }
         //
         SpreadFactor = isAiming ? 0.001f : 0.05f;//根据是否瞄准设置射击扩散因子
+
+        if (mainCamera != null)
+        {
+            float targetFOV = isAiming ? aimFOV : normalFOV;
+            mainCamera.fieldOfView = Mathf.Lerp(mainCamera.fieldOfView, targetFOV, Time.deltaTime * fovSpeed);
+        }
 
         if (Input.GetKeyDown(inspectInputName))
         {
@@ -272,6 +289,10 @@ public class AutomaticGun : Weapon
         //发出射线 检测是否击中物体
         if (Physics.Raycast(ShootPoint.position, shootDirection, out hit,range))
         {
+            GameObject hole = Instantiate(bulletHolePrefab, hit.point + hit.normal * 0.001f, Quaternion.LookRotation(hit.normal));
+            hole.transform.SetParent(hit.collider.transform);
+            Destroy(hole, bulletHoleLifeTime);
+
             Transform bullet;
 
             bullet = Instantiate(bulletPrefab, BulletShootPoint.position, BulletShootPoint.rotation);//实例化子弹特效
@@ -279,7 +300,7 @@ public class AutomaticGun : Weapon
             bullet.GetComponent<Rigidbody>().linearVelocity = shootDirection * bulletForce;
 
             //销毁子弹
-            Destroy(bullet.gameObject, 3f);
+            Destroy(bullet.gameObject, 0.05f);
 
             Target target = hit.collider.GetComponent<Target>();//尝试获取被击中物体上的 Target 脚本组件
             if (target != null)
@@ -318,12 +339,23 @@ public class AutomaticGun : Weapon
 
     public override void AimIn()
     {
-        
+        for (int i = 0; i < crossQuarterIgms.Length; i++)
+        {
+            if (crossQuarterIgms[i].gameObject.activeSelf)
+                crossQuarterIgms[i].gameObject.SetActive(false);
+        }
+        //瞄准的时候，摄像机视野变近
+
     }
 
     public override void AimOut()
     {
-        
+        // 恢复准心图片显示
+        for (int i = 0; i < crossQuarterIgms.Length; i++)
+        {
+            if (!crossQuarterIgms[i].gameObject.activeSelf)
+                crossQuarterIgms[i].gameObject.SetActive(true);
+        }
     }
 
     public override void DoReloadAnimation()
