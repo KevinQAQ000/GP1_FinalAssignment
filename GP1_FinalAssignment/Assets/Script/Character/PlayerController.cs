@@ -140,37 +140,67 @@ public class PlayerController : MonoBehaviour
 
     public void Jump()//人物跳跃方法
     {
-        if (isBlocked)
+        if (!isCanCrouch) return;
+        isJump = Input.GetKeyDown(jumpInputName);//获取跳跃按键输入
+        if (isJump && isGround)//判断是否跳跃
         {
-            return;
+            isGround = false;
+            verticalVelocity = 5f;//跳跃力度
         }
-        else
+        else if (!isGround && isGround)
         {
-            isJump = Input.GetKeyDown(jumpInputName);//获取跳跃按键输入
-            if (isJump && isGround)//判断是否跳跃
-            {
-                isGround = false;
-                jumpForce = 5f;//跳跃力度
-            }
-            if (!isGround)
-            {
-                jumpForce -= fallForce * Time.deltaTime;//下落速度
-                Vector3 jump = new Vector3(0, jumpForce, 0);//将跳跃力度转换成V3坐标
-                collisionFlags = characterController.Move(jump * Time.deltaTime);//调用角色控制器移动方法，向上移动模拟跳跃
+            isGround = false;
+        }
 
-                if (collisionFlags == CollisionFlags.Below)//判断是否落地
-                {
-                    isGround = true;
-                    jumpForce = 0f;
-                }
-                if (isGround && collisionFlags == CollisionFlags.None)//防止跳跃过程中落地后继续下落
-                {
-                    isGround = false;
-                }
-                isJump = true;
+        if (!isGround)
+        {
+            jumpForce -= fallForce * Time.deltaTime;//下落速度
+            Vector3 jump = new Vector3(0, jumpForce * Time.deltaTime, 0);//将跳跃力度转换成V3坐标
+            collisionFlags = characterController.Move(jump * Time.deltaTime);//调用角色控制器移动方法，向上移动模拟跳跃
+            Debug.Log("collisionFlags:" + collisionFlags);
+            Debug.Log("characterController.isGround:" + characterController.isGrounded);
+            if (collisionFlags == CollisionFlags.Below)//判断是否落地
+            {
+                isGround = true;
+                jumpForce = -3f;
             }
-        }
-            
+    }
+
+        //if (isBlocked)
+        //{
+        //    return;
+        //}
+        //else
+        //{
+        //    isJump = Input.GetKeyDown(jumpInputName);//获取跳跃按键输入
+        //    if (isJump && isGround)//判断是否跳跃
+        //    {
+        //        isGround = false;
+        //        jumpForce = 5f;//跳跃力度
+        //    }
+
+        //    //人物跳跃逻辑
+        //    if (!isGround)
+        //    {
+        //        jumpForce -= fallForce * Time.deltaTime;//下落速度
+        //        Vector3 jump = new Vector3(0, jumpForce * Time.deltaTime, 0);//将跳跃力度转换成V3坐标
+        //        collisionFlags = characterController.Move(jump * Time.deltaTime);//调用角色控制器移动方法，向上移动模拟跳跃
+
+        //        //判断玩家在地面
+        //        //collisionFlags = characterController.collisionFlags;//获取碰撞标志
+        //        if (collisionFlags == CollisionFlags.Below)//判断是否落地
+        //        {
+        //            isGround = true;
+        //            jumpForce = 0f;
+        //        }
+        //        if (isGround && collisionFlags == CollisionFlags.None)//防止跳跃过程中落地后继续下落
+        //        {
+        //            isGround = false;
+        //        }
+        //        isJump = true;
+        //    }
+        //}
+
     }
 
     /// <summary>
@@ -312,7 +342,7 @@ public class PlayerController : MonoBehaviour
             // 跳跃逻辑
             if (Input.GetKeyDown(jumpInputName) && !isBlocked)
             {
-                verticalVelocity = 10f; // 你的跳跃力度
+                verticalVelocity = 6f; // 你的跳跃力度
                 isGround = false;
             }
         }
