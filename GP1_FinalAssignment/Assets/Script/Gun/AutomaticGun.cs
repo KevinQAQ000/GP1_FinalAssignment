@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using Cinemachine;
 
 /// <summary>
 /// 武器内部音效
@@ -52,6 +53,7 @@ public class AutomaticGun : Weapon
     public float boltReturnSpeed;    // 拉栓复位的速度
     private Vector3 boltOriginalLocalPos;  // 记录拉栓初始位置
     public float returnTime = 0.05f;      // 回位花费的时间（秒）
+    public CinemachineImpulseSource impulseSource;
 
     [Header("换弹动画组件")]
     public Transform magazineObj;//弹匣物体
@@ -106,6 +108,8 @@ public class AutomaticGun : Weapon
         mainCamera = Camera.main;//获取主摄像机
         if (mainCamera == null) mainCamera = Camera.main;
         if (mainCamera != null) normalFOV = mainCamera.fieldOfView;
+
+        impulseSource = GetComponent<CinemachineImpulseSource>();
     }
 
     private void Start()//初始化
@@ -200,6 +204,7 @@ public class AutomaticGun : Weapon
         if(GunShootInput && currentBullets > 0 && !isReloading)
         {
             GunFire();//调用射击方法
+            impulseSource.GenerateImpulse();//产生摄像机抖动效果
         }
         
         if (fireTimer < fireRate)//如果计时器小于射速
@@ -248,6 +253,8 @@ public class AutomaticGun : Weapon
         {
             return;//返回 不执行下面的代码
         }
+
+
         //触发拉栓射击动画 ---
         StopCoroutine("BoltFireRoutine"); // 如果射速极快，先停止上一次的复位动作
         StartCoroutine(BoltFireRoutine());
@@ -309,7 +316,6 @@ public class AutomaticGun : Weapon
                 // 伤害值使用你脚本中定义的 damage 变量，并传入击中点 hit.point
                 target.TakeDamage(damage, hit.point);
             }
-
             Debug.Log("Hit " + hit.collider.name);
         }
 
@@ -325,6 +331,7 @@ public class AutomaticGun : Weapon
         currentBullets--;//当前弹匣子弹数量减少1
         UpdateAmmoUI();//更新弹药UI
         ExpendCross(30f);//调用准心扩展方法 
+        impulseSource.GenerateImpulse();//产生摄像机抖动效果
     }
 
     /// <summary>
@@ -403,13 +410,6 @@ public class AutomaticGun : Weapon
 
         
     }
-
-    public void UpdateAmmoUI()//更新弹药UI
-    {
-        ammoTextUI.text = currentBullets.ToString() + " / " + BulletLeft.ToString();
-        shootModeTextUI.text = shootModeName;
-    }
-
     /// <summary>
     /// 调用准心开合度携程 1帧执行5次
     /// 只负责射击时瞬间增加准心开合度
@@ -423,6 +423,14 @@ public class AutomaticGun : Weapon
             ExpendCross(Time.deltaTime * 500);
         }
     }
+
+    public void UpdateAmmoUI()//更新弹药UI
+    {
+        ammoTextUI.text = currentBullets.ToString() + " / " + BulletLeft.ToString();
+        shootModeTextUI.text = shootModeName;
+    }
+
+
     private IEnumerator ReloadRoutine()
     {
         if (isReloading) yield break;
@@ -474,7 +482,7 @@ public class AutomaticGun : Weapon
         yield return new WaitForSeconds(2f);
 
         //扳机/拉栓动作
-        Vector3 targetBoltPos = originalBoltPos + new Vector3(0, 0, -0.5f);
+        Vector3 targetBoltPos = originalBoltPos + new Vector3(0, 0, -0.25f);
 
         //向后拉 (使用反向平方曲线，模拟拉力的阻碍感)
         elapsed = 0;

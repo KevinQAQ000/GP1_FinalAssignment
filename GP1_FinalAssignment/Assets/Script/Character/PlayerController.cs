@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// character player controller
@@ -17,6 +18,7 @@ public class PlayerController : MonoBehaviour
     public float walkSpeed;//行走速度
     public float runSpeed;//奔跑速度
     public float crouchSpeed;//蹲伏速度
+    public float playerHealth;//玩家生命值
     public float jumpForce;//跳跃力度
     public float fallForce;//下落速度
     public float crouchHeight;//蹲伏高度
@@ -37,8 +39,11 @@ public class PlayerController : MonoBehaviour
     public bool isCanCrouch;//是否可以蹲伏
     public bool isCouching;//是否正在蹲伏
     public bool isBlocked;//是否被阻挡
+    private bool playerisDead;//玩家是否死亡  
+    private bool isDamage;//玩家是否受伤
 
     public LayerMask crouchLayerMask;//地面图层
+    public Text playerHealthUI;//玩家生命值UI显示
 
     [Header("音效")]
     public AudioClip walkSound;//行走音效
@@ -51,15 +56,18 @@ public class PlayerController : MonoBehaviour
         walkSpeed = 4f;
         runSpeed = 8f;
         jumpForce = 0f;
-        fallForce = 10f;
+        fallForce = 15f;
         crouchSpeed = 3f;
         crouchHeight = 1.2f;
+        playerHealth = 100f;
         standHeight = characterController .height;
+        playerHealthUI.text = "Hp:" + playerHealth;
     }
 
 
     void Update()//60
     {
+        playerHealthUI.text = "Hp:" + playerHealth;
         isCanCrouch = CanCrouch();//判断是否可以蹲伏
         CheckGroundStatus(); // 优化后的地面检测
         Vector3 finalMovement = CalculateMovement();
@@ -162,7 +170,7 @@ public class PlayerController : MonoBehaviour
             if (collisionFlags == CollisionFlags.Below)//判断是否落地
             {
                 isGround = true;
-                jumpForce = -3f;
+                jumpForce = -2f;
             }
     }
 
@@ -337,7 +345,7 @@ public class PlayerController : MonoBehaviour
             airControlDirection = horizontalMove;
 
             // 落地重置垂直速度（-2f 是为了让角色更稳地贴着地面/斜坡）
-            if (verticalVelocity < 0) verticalVelocity = -2f;
+            if (verticalVelocity < 0) verticalVelocity = -3f;
 
             // 跳跃逻辑
             if (Input.GetKeyDown(jumpInputName) && !isBlocked)
@@ -360,11 +368,32 @@ public class PlayerController : MonoBehaviour
         return new Vector3(horizontalMove.x, verticalVelocity, horizontalMove.z);
     }
 
+
+    /// <summary>
+    /// 玩家生命值
+    /// </summary>
+    /// <param name="damage"><接受到的伤害/param>
+    public void PlayerHealth(float damage)
+    {
+        playerHealth -= damage;
+        isDamage = true;
+        playerHealthUI.text = "Hp: " + playerHealth;
+        if (playerHealth <= 0 && !playerisDead)
+        {
+            playerisDead = true;
+            Debug .Log ("Player is Dead!");
+            playerHealthUI.text = "Hp: 0, You Died.";
+            Time.timeScale = 0f;//暂停游戏
+        }
+    }
+
+
     public enum MovementState//人物移动状态
     {
         Walking,
         Running,
         Crouching,
         idle
-    }   
+    }
+
 }
