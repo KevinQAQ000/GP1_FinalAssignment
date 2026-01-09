@@ -28,5 +28,7 @@ public class PatrolState : EnemyBaseState
         Debug.Log(distance);
     }
 
-    
+    //To do: Ñ²Âß×´Ì¬ÇÐ»»µ½¹¥»÷×´Ì¬
+
+
 }

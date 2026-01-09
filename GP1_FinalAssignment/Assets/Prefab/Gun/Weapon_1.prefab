@@ -13627,6 +13627,10 @@ PrefabInstance:
       value: Player
       objectReference: {fileID: 0}
     - target: {fileID: 5584528921107461034, guid: 9e7739381c6c0a443a85ceb6911594b3, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5584528921107461034, guid: 9e7739381c6c0a443a85ceb6911594b3, type: 3}
       propertyPath: m_DefaultVelocity.x
       value: 0
       objectReference: {fileID: 0}
