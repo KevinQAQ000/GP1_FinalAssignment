@@ -54,7 +54,7 @@ public class PlayerController : MonoBehaviour
         characterController = GetComponent<CharacterController>();//获取角色控制器组件
         audioSource = GetComponent<AudioSource>();//获取音频源组件
         walkSpeed = 4f;
-        runSpeed = 8f;
+        runSpeed = 6f;
         jumpForce = 0f;
         fallForce = 15f;
         crouchSpeed = 3f;

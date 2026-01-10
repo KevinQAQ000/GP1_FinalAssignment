@@ -318,7 +318,7 @@ GameObject:
   - component: {fileID: 4282171339779206072}
   - component: {fileID: 1440615138888408594}
   - component: {fileID: 6549341221883639787}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -393,7 +393,7 @@ GameObject:
   - component: {fileID: 1247693863055436743}
   - component: {fileID: 4221063101434533091}
   - component: {fileID: 6615876898984971474}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Damage Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -521,6 +521,7 @@ GameObject:
   - component: {fileID: 891608141594729191}
   - component: {fileID: 3574529269887196598}
   - component: {fileID: 2261360275146918439}
+  - component: {fileID: 5716176231289363411}
   m_Layer: 9
   m_Name: Bug
   m_TagString: Enemy
@@ -588,6 +589,33 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.8, y: 0.60950285, z: 1.69}
   m_Center: {x: -0.043256402, y: 0.41912213, z: 0.28889096}
+--- !u!114 &5716176231289363411
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 986962377555714491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9835394d7e4035c42a24118a920c9dde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enemyHealth: 100
+  slider: {fileID: 3208373193489819069}
+  getGamageText: {fileID: 6615876898984971474}
+  deadEffect: {fileID: 0}
+  wayPointObj:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  wayPoints: []
+  index: 0
+  nameIndex: 0
+  currentState: {fileID: 0}
+  attackRate: 5
+  attackRange: 0
+  isDead: 0
 --- !u!1 &1134785062174411500
 GameObject:
   m_ObjectHideFlags: 0
@@ -685,7 +713,7 @@ GameObject:
   - component: {fileID: 3425067724104816422}
   - component: {fileID: 2679921464935079407}
   - component: {fileID: 8269832849766577456}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1103,7 +1131,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9032079669134421749}
   - component: {fileID: 3208373193489819069}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Slider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1330,7 +1358,7 @@ GameObject:
   - component: {fileID: 1244677880494107387}
   - component: {fileID: 5074659254314872825}
   - component: {fileID: 4553946542516588463}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Handle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1627,7 +1655,7 @@ GameObject:
   - component: {fileID: 2909389176999124406}
   - component: {fileID: 3060146959201876993}
   - component: {fileID: 441884474228262217}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1812,7 +1840,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2961277903118590649}
-  - component: {fileID: 2237594555859960214}
   m_Layer: 9
   m_Name: Body
   m_TagString: Enemy
@@ -1855,28 +1882,6 @@ Transform:
   - {fileID: 8757245368282658501}
   m_Father: {fileID: 891608141594729191}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
---- !u!114 &2237594555859960214
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5019280052854977162}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9835394d7e4035c42a24118a920c9dde, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  enemyHealth: 0
-  slider: {fileID: 0}
-  getGamageText: {fileID: 0}
-  deadEffect: {fileID: 0}
-  wayPointObj: []
-  wayPoints: []
-  index: 0
-  nameIndex: 0
-  currentState: {fileID: 0}
-  isDead: 0
 --- !u!1 &5218891883440222242
 GameObject:
   m_ObjectHideFlags: 0
@@ -1972,7 +1977,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7834465535433909174}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Fill Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3138,7 +3143,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 984070025044910601}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Handle Slide Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}

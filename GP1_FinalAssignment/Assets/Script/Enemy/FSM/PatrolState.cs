@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 
@@ -27,9 +28,14 @@ public class PatrolState : EnemyBaseState
            }
         }
         //Debug.Log(distance);
-    }
 
-    //To do: Ñ²Âß×´Ì¬ÇÐ»»µ½¹¥»÷×´Ì¬
+        //To do: Ñ²Âß×´Ì¬ÇÐ»»µ½¹¥»÷×´Ì¬
+        if (enemy.attackList.Count > 0)
+        {
+            enemy.TransitionToState(enemy.attackState);
+        }
+
+    }
 
 
 }
