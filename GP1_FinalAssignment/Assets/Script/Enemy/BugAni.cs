@@ -11,15 +11,18 @@ public class SpiderLegStepping : MonoBehaviour
     public bool isInverse = false;
 
     private float offset;
+    private Enemy enemyScript;
 
     void Start()
     {
         //稍微给点随机值，让动作不至于像机械表一样死板
         offset = Random.Range(0f, 0.1f);
+        enemyScript = GetComponentInParent<Enemy>();
     }
 
     void Update()
     {
+        if (enemyScript.isDead) return;  //如果敌人死亡则不再执行后续逻辑
         //使用 Sin 函数来实现平滑的来回摆动 (-1 到 1 之间)
         //如果是反向腿，我们在时间上加一个偏移量
         float phase = Time.time * currentSpeed + offset;

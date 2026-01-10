@@ -316,6 +316,14 @@ public class AutomaticGun : Weapon
                 // 伤害值使用你脚本中定义的 damage 变量，并传入击中点 hit.point
                 target.TakeDamage(damage, hit.point);
             }
+
+            //击中敌人时候做的判断
+            if (hit.transform.CompareTag("Enemy"))
+            {
+                Debug.Log("Enemy Hit!");
+                hit.transform.gameObject.GetComponent<Enemy>().Health(damage);//调用敌人扣血方法
+            }
+
             Debug.Log("Hit " + hit.collider.name);
         }
 

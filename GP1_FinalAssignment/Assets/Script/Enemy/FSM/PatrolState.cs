@@ -9,7 +9,8 @@ public class PatrolState : EnemyBaseState
 {
     public override void EnemyState(Enemy enemy)
     {
-        enemy.LoadPath(enemy.wayPointObj[0]);//加载敌人巡逻路线
+        //随机加载敌人巡逻路线
+        enemy.LoadPath(enemy.wayPointObj[WaypointManager.Instance.usingIndex[enemy.nameIndex]]);
     }
 
     public override void OnUpdate(Enemy enemy)
@@ -25,7 +26,7 @@ public class PatrolState : EnemyBaseState
                enemy.index = 0;//重置下标值，重新开始巡逻
            }
         }
-        Debug.Log(distance);
+        //Debug.Log(distance);
     }
 
     //To do: 巡逻状态切换到攻击状态
