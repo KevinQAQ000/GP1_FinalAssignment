@@ -28,13 +28,16 @@ public class NativeMultiPointFlight : MonoBehaviour
     {
         isFlying = true;
 
-        // 1. 玩家进入逻辑
+        ////玩家进入逻辑
         CharacterController cc = player.GetComponent<CharacterController>();
-        if (cc) cc.enabled = false;
+        //玩家碰撞体消失
+        player.GetComponent<CharacterController>().enabled = false;
+
+        //if (cc) cc.enabled = false;
 
         player.transform.SetParent(this.transform);
 
-        // 平滑上车
+        //平滑上车
         while (Vector3.Distance(player.transform.localPosition, seat.localPosition) > 0.01f)
         {
             player.transform.localPosition = Vector3.Lerp(player.transform.localPosition, seat.localPosition, Time.deltaTime * mountSpeed);
@@ -42,7 +45,7 @@ public class NativeMultiPointFlight : MonoBehaviour
             yield return null;
         }
 
-        // 2. 逐点飞行逻辑
+        //逐点飞行逻辑
         foreach (Transform targetPoint in waypoints)
         {
             while (Vector3.Distance(transform.position, targetPoint.position) > arriveDistance)
@@ -61,11 +64,11 @@ public class NativeMultiPointFlight : MonoBehaviour
             }
         }
 
-        // 3. 到达终点下车逻辑
+        //到达终点下车逻辑
         // 脱离父子关系
         player.transform.SetParent(null);
 
-        // --- 核心修正：修正角色旋转角度 ---
+        // 修正角色旋转角度
         // 获取当前欧拉角，只保留 Y 轴，强制将 X 和 Z 轴归零（防止歪斜）
         Vector3 currentEuler = player.transform.eulerAngles;
         player.transform.eulerAngles = new Vector3(0f, currentEuler.y, 0f);
@@ -76,7 +79,8 @@ public class NativeMultiPointFlight : MonoBehaviour
         player.transform.position = exitPosition;
 
         // 恢复控制
-        if (cc) cc.enabled = true;
+        player.GetComponent<CharacterController>().enabled = true;
+        //if (cc) cc.enabled = true;
 
         Debug.Log("到达终点，角色已扶正并下车");
 

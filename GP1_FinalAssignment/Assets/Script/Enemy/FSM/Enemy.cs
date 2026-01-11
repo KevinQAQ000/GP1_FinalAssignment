@@ -222,7 +222,7 @@ public class Enemy : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         //攻击列表要剔除子弹，否则会一直添加子弹到攻击列表中
-        if (!attackList.Contains(other.transform) && !isDead && other.CompareTag("Bullet"))
+        if (!attackList.Contains(other.transform) && !isDead)
         {
             attackList.Add(other.transform);//将玩家添加到攻击目标列表
         }

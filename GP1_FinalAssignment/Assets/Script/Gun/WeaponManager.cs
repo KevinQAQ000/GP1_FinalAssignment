@@ -14,7 +14,6 @@ public class WeaponManager : MonoBehaviour
 
     private Vector3 originalLocalPos;//记录武器的初始局部坐标
     public PlayerController PlayerController;
-    public AudioSource AudioSource;
 
     void Start()
     {
@@ -28,7 +27,7 @@ public class WeaponManager : MonoBehaviour
     {
         if(PlayerController.playerisDead)
         {
-            AudioSource.Pause();
+            
         }
 
         if (isSwitching) return; //如果正在切枪，不接受新输入
