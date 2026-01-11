@@ -121,7 +121,7 @@ public class AutomaticGun : Weapon
         lightDuraing = 0.03f;//枪口光持续时间
         range = 300f;
         bulletForce = 800f;
-        BulletLeft = bulletMag * 5;//初始备用子弹数量为弹匣容量的5倍
+        BulletLeft = bulletMag * 3;//初始备用子弹数量为弹匣容量的5倍
         currentBullets = bulletMag;//初始当前弹匣子弹数量为弹匣容量
         boltOriginalLocalPos = boltObj.localPosition;//记录拉栓初始位置
         fireTimer = fireRate;
@@ -543,6 +543,20 @@ public class AutomaticGun : Weapon
             yield return null;
         }
         boltObj.localPosition = boltOriginalLocalPos;
+    }
+
+    /// <summary>
+    /// 强制补满备弹和当前弹匣（用于补给站）
+    /// </summary>
+    public void RefillMaxAmmo()
+    {
+        // 备弹设为初始设定的5倍容量（根据你Start里的逻辑）
+        BulletLeft = bulletMag * 3;
+        // 当前弹匣补满
+        currentBullets = bulletMag;
+        // 更新UI显示
+        UpdateAmmoUI();
+        Debug.Log("所有武器弹药已补满！");
     }
 
     public enum ShootMode

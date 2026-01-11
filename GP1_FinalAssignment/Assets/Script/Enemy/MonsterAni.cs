@@ -1,25 +1,27 @@
 using UnityEngine;
 
-public class LegStepper : MonoBehaviour
+public class SimpleWalkAnimation : MonoBehaviour
 {
     [Header("腿部引用")]
     public Transform leftLeg;
     public Transform rightLeg;
 
-    [Header("行走参数")]
-    public float speed = 5f;      // 走路频率
-    public float amplitude = 30f; // 摆动幅度（度数）
+    [Header("走路设置")]
+    public float speed = 5.0f;      // 摆动速度
+    public float maxAngle = 30.0f;  // 最大摆动角度
 
     void Update()
     {
-        // 使用 Time.time 配合 Sin 函数计算当前的摆动角度
-        float angle = Mathf.Sin(Time.time * speed) * amplitude;
+        // 使用 Mathf.Sin 随时间产生 -1 到 1 的变化
+        // Time.time * speed 决定了步伐的快慢
+        float movement = Mathf.Sin(Time.time * speed);
 
-        // 设置左腿旋转（绕Z轴）
-        // Quaternion.Euler(x, y, z)
+        // 计算当前帧的角度
+        float angle = movement * maxAngle;
+
+        // 应用旋转
+        // 左腿向前摆时，右腿应该向后摆，所以右腿取反 (-angle)
         leftLeg.localRotation = Quaternion.Euler(0, 0, angle);
-
-        // 设置右腿旋转（角度取反，实现交替步法）
         rightLeg.localRotation = Quaternion.Euler(0, 0, -angle);
     }
 }

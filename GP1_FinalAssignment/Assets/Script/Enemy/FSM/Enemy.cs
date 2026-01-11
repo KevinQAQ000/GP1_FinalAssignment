@@ -105,8 +105,13 @@ public class Enemy : MonoBehaviour
                     break;
             }
             //如果攻击目标列表为空，说明没有玩家在攻击范围内，继续巡逻
-            targetPosition = Vector3.MoveTowards(transform.position, wayPoints[index], agent.speed * Time.deltaTime);//计算朝目标点移动后的位置
+            //targetPosition = Vector3.MoveTowards(transform.position, wayPoints[index], agent.speed * Time.deltaTime);//计算朝目标点移动后的位置
             agent.destination = wayPoints[index];
+            if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
+            {
+                // 切换到下一个路点
+                index = (index + 1) % wayPoints.Count;
+            }
             //if (wayPoints.Count > 0)
             //{
             //    agent.destination = wayPoints[index];
@@ -184,25 +189,31 @@ public class Enemy : MonoBehaviour
     /// </summary>
     public void AttackAction()
     {
-        if (Vector3.Distance(transform.position, targetPoint.position) < attackRange)
+        //检查是否有目标
+        if (attackList.Count > 0 && attackList[0] != null)
         {
-            if (Time.time >= nextAttack)
+            //使用 attackList[0] 计算距离，而不是 targetPoint
+            float dist = Vector3.Distance(transform.position, attackList[0].position);
+
+            if (dist < attackRange)
             {
-                //执行攻击动作
-                //怪物向前冲击一个小距离模拟攻击动作
-                nextAttack = Time.time + attackRate;//计算下次攻击时间
-                switch (enemyType)
+                if (Time.time >= nextAttack && !isAttacking) //确保当前没有正在进行的攻击协程
                 {
-                    case EnemyType.Bug:
-                        //如果当前怪物的攻击ID是0，执行跳跃冲刺攻击
-                        StartCoroutine(BugDash(attackList[0].position));
-                        break;
-                    case EnemyType.Monster:
-                        //如果当前怪物的攻击ID是1，执行撞击攻击
-                        StartCoroutine(MonsterAttack(attackList[0].position));
-                        break;
-                    case EnemyType.Sicence_guys:
-                        break;
+                    nextAttack = Time.time + attackRate;
+
+                    // 执行对应的协程
+                    switch (enemyType)
+                    {
+                        case EnemyType.Bug:
+                            StartCoroutine(BugDash(attackList[0].position));
+                            break;
+                        case EnemyType.Monster:
+                            StartCoroutine(MonsterAttack(attackList[0].position));
+                            break;
+                        case EnemyType.Sicence_guys:
+                            StartCoroutine(Sicence_guys_Attack(attackList[0].position));
+                            break;
+                    }
                 }
             }
         }
@@ -302,10 +313,107 @@ public class Enemy : MonoBehaviour
 
         agent.isStopped = false;
     }
+
+    bool isAttacking = false; // 需要在类中定义这个变量
     //Todo: 实现怪物撞击攻击协程
+    /// <summary>
+    /// 模拟“怪物撞击”动作的协程
+    /// 逻辑：蓄力(后退一点) -> 快速直线冲刺 -> 命中停顿
+    /// </summary>
     IEnumerator MonsterAttack(Vector3 targetPos)
     {
-        return null;
+        if (isAttacking) yield break; // 防止重复触发
+        isAttacking = true;
+        Debug.Log("怪物开始撞击攻击！");
+
+        agent.isStopped = true;
+        Vector3 startPos = transform.position;
+        Vector3 attackDir = (targetPos - startPos).normalized;
+        attackDir.y = 0;
+
+        // 蓄力：颜色变红（可选）或后退
+        float prepareTime = 0.4f;
+        float elapsed = 0f;
+        Vector3 preparePos = startPos - attackDir * 0.8f; // 稍微加大后退幅度，更明显
+        while (elapsed < prepareTime)
+        {
+            elapsed += Time.deltaTime;
+            transform.position = Vector3.Lerp(startPos, preparePos, elapsed / prepareTime);
+            yield return null;
+        }
+
+        // 冲撞
+        elapsed = 0f;
+        float chargeDuration = 0.2f;
+        Vector3 chargeTarget = startPos + attackDir * (attackRange + 1.5f);
+        Vector3 posBeforeCharge = transform.position;
+
+        while (elapsed < chargeDuration)
+        {
+            elapsed += Time.deltaTime;
+            transform.position = Vector3.Lerp(posBeforeCharge, chargeTarget, elapsed / chargeDuration);
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(0.5f); // 僵直
+
+        agent.isStopped = false;
+        isAttacking = false;
+        Debug.Log("怪物撞击结束");
     }
 
+    //Todo: 实现科学家攻击协程 快速移动到目标位置并停留一段时间
+    /// <summary>
+    /// 模拟“科学家攻击”动作的协程
+    /// 逻辑：快速闪现/滑步到玩家附近 -> 在玩家身边停留（模拟施法或注射） -> 结束攻击
+    /// </summary>
+    IEnumerator Sicence_guys_Attack(Vector3 targetPos)
+    {
+        if (isAttacking) yield break;
+        isAttacking = true;
+
+        agent.isStopped = true; // 停止导航，由协程控制位移
+        Vector3 startPos = transform.position;
+
+        // 1. 计算偏移位置：科学家通常不会直接重叠在玩家身上，而是移动到其前方 1 米处
+        Vector3 attackDirection = (targetPos - startPos).normalized;
+        Vector3 offsetTarget = targetPos - attackDirection * 1.0f;
+
+        // 2. 快速移动阶段 (滑步/闪现)
+        float moveDuration = 0.15f; // 极短时间完成位移
+        float elapsed = 0f;
+        while (elapsed < moveDuration)
+        {
+            elapsed += Time.deltaTime;
+            // 使用 Lerp 实现平滑但极快的移动
+            transform.position = Vector3.Lerp(startPos, offsetTarget, elapsed / moveDuration);
+            yield return null;
+        }
+
+        // 确保位置精准到达
+        transform.position = offsetTarget;
+
+        // 3. 停留阶段 (停留时间较长，模拟执行科学操作/攻击)
+        // 可以在这里触发伤害事件：DealDamageToPlayer();
+        Debug.Log("科学家正在进行‘研究’(攻击)...");
+
+        // 可以在停留时添加一个小效果，比如旋转向玩家
+        float stayDuration = 1.0f; // 停留1秒
+        float stayElapsed = 0f;
+        while (stayElapsed < stayDuration)
+        {
+            stayElapsed += Time.deltaTime;
+            // 攻击时始终盯着玩家
+            if (attackList.Count > 0 && attackList[0] != null)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(attackList[0].position - transform.position);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
+            }
+            yield return null;
+        }
+
+        // 4. 结束并恢复
+        agent.isStopped = false;
+        isAttacking = false;
+    }
 }

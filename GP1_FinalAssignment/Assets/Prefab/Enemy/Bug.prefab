@@ -557,7 +557,7 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.5
-  m_Speed: 20
+  m_Speed: 5
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 180
@@ -611,23 +611,33 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   wayPoints: []
   index: 0
-  nameIndex: 0
+  nameIndex: 1
   targetPoint: {fileID: 0}
   currentState: {fileID: 0}
   currentStateName: 
   patrolState: {fileID: 0}
   attackState: {fileID: 0}
-  attackList: []
+  attackList:
+  - {fileID: 0}
   attackRate: 2
-  attackRange: 2
+  attackRange: 2.5
   isDead: 0
   detectionRange: 10
-  detectionOffset: 2
+  detectionOffset: 5
   playerLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 128
 --- !u!1 &1134785062174411500
 GameObject:
   m_ObjectHideFlags: 0

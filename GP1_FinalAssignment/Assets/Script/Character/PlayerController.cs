@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement; // 核心引用
 
 /// <summary>
 /// character player controller
@@ -55,6 +56,12 @@ public class PlayerController : MonoBehaviour
     public AudioClip walkSound;//行走音效
     public AudioClip runSound;//奔跑音效
 
+    [Header("获胜逻辑")]
+    public GameObject YouWinUI; // 获胜 UI 面板
+    public string winTagName = "WinObject"; // 获胜触发物体的 Tag
+    private float winTimer = 0f; // 计时器
+    private bool playerWon = false; // 是否已经获胜
+
     void Start()
     {
         characterController = GetComponent<CharacterController>();//获取角色控制器组件
@@ -73,9 +80,10 @@ public class PlayerController : MonoBehaviour
         {
             YouDied.gameObject.SetActive(false);
         }
+        if (YouWinUI != null) YouWinUI.SetActive(false);
     }
 
-
+    private bool isTouchingWinObject = false; // 新增变量：是否正触碰获胜物体
     void Update()//60
     {
         //玩家受到伤害后，屏幕产生红色闪烁效果
@@ -118,6 +126,24 @@ public class PlayerController : MonoBehaviour
         Jump();
         PlayerFootSoundSet();
         Moving();
+        if (playerWon) return;
+
+        // 获胜计时逻辑
+        if (isTouchingWinObject)
+        {
+            winTimer += Time.deltaTime;
+            Debug.Log("正在占领...进度: " + (winTimer / 5f * 100f).ToString("F0") + "%");
+
+            if (winTimer >= 5f)
+            {
+                WinGame();
+            }
+        }
+        else
+        {
+            // 离开区域后计时器缓慢回落
+            winTimer = Mathf.Max(0, winTimer - Time.deltaTime);
+        }
     }
     private void FixedUpdate()//50
     {
@@ -497,6 +523,39 @@ public class PlayerController : MonoBehaviour
         Debug.Log("复活成功，目标点: " + targetPos);
     }
 
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag(winTagName))
+        {
+            isTouchingWinObject = true;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag(winTagName))
+        {
+            isTouchingWinObject = false;
+        }
+    }
+    public void RestartGame()
+    {
+        Time.timeScale = 1f; // 必须恢复时间
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); // 加载当前场景
+    }
+    private void WinGame()
+    {
+        playerWon = true;
+        Debug.Log("You Win!");
+
+        if (YouWinUI != null)
+        {
+            YouWinUI.SetActive(true);
+            Time.timeScale = 0f; // 暂停游戏
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+    }
 
     public enum MovementState//人物移动状态
     {
