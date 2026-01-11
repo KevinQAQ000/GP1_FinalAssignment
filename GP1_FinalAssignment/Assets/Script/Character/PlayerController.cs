@@ -62,6 +62,10 @@ public class PlayerController : MonoBehaviour
     private float winTimer = 0f; // 计时器
     private bool playerWon = false; // 是否已经获胜
 
+    [Header("悬崖死亡设置")]
+    public float deathYThreshold = -10f; // 掉到多深算“掉下悬崖”
+    private float fallTimer = 0f;        // 掉落计时器
+
     void Start()
     {
         characterController = GetComponent<CharacterController>();//获取角色控制器组件
@@ -101,6 +105,8 @@ public class PlayerController : MonoBehaviour
             //游戏结束，停止一切操作
             return;
         }
+
+        CheckFallDeath();
 
         playerHealthUI.text = "Hp:" + playerHealth;
         isCanCrouch = CanCrouch();//判断是否可以蹲伏
@@ -147,6 +153,31 @@ public class PlayerController : MonoBehaviour
     }
     private void FixedUpdate()//50
     {
+    }
+
+    /// <summary>
+    /// 检测掉下悬崖的逻辑
+    /// </summary>
+    private void CheckFallDeath()
+    {
+        // 如果 Y 轴坐标低于阈值
+        if (transform.position.y < deathYThreshold)
+        {
+            fallTimer += Time.deltaTime;
+            // 每秒打印一次调试信息
+            if (fallTimer > 0) Debug.Log("正在坠落... " + fallTimer.ToString("F1") + "s");
+
+            if (fallTimer >= 3f)
+            {
+                Die();
+                fallTimer = 0f; // 触发后重置
+            }
+        }
+        else
+        {
+            // 在安全区域时重置计时器
+            fallTimer = 0f;
+        }
     }
 
     public void Moving()//人物移动方法
