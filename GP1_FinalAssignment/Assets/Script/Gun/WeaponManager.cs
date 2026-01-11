@@ -13,16 +13,24 @@ public class WeaponManager : MonoBehaviour
     private bool isSwitching = false;//是否正在切换中
 
     private Vector3 originalLocalPos;//记录武器的初始局部坐标
+    public PlayerController PlayerController;
+    public AudioSource AudioSource;
 
     void Start()
     {
         hasWeapon = new bool[weapons.Length];
         //假设两把枪的初始相对位置是一样的
         if (weapons.Length > 0) originalLocalPos = weapons[0].transform.localPosition;
+        PlayerController = GetComponent<PlayerController>();
     }
 
     void Update()
     {
+        if(PlayerController.playerisDead)
+        {
+            AudioSource.Pause();
+        }
+
         if (isSwitching) return; //如果正在切枪，不接受新输入
 
         float scroll = Input.GetAxis("Mouse ScrollWheel");
@@ -39,7 +47,7 @@ public class WeaponManager : MonoBehaviour
         }
     }
 
-    IEnumerator SwitchWeaponRoutine()
+    IEnumerator SwitchWeaponRoutine()//切换武器的协程
     {
         isSwitching = true;
 
@@ -61,7 +69,7 @@ public class WeaponManager : MonoBehaviour
     }
 
     //移动武器的辅助协程
-    IEnumerator MoveWeapon(GameObject weapon, Vector3 targetPos)
+    IEnumerator MoveWeapon(GameObject weapon, Vector3 targetPos)//将武器移动到目标位置
     {
         while (Vector3.Distance(weapon.transform.localPosition, targetPos) > 0.01f)
         {
@@ -71,7 +79,7 @@ public class WeaponManager : MonoBehaviour
         weapon.transform.localPosition = targetPos;
     }
 
-    public void UnlockWeapon(int index)
+    public void UnlockWeapon(int index)//解锁武器的方法
     {
         //如果已经拥有该武器，直接返回（防止重复触发）
         if (hasWeapon[index]) return;
@@ -97,7 +105,7 @@ public class WeaponManager : MonoBehaviour
     }
 
     //专门为“拾取”设计的切换逻辑
-    IEnumerator SwitchToNewWeapon(int newIndex)
+    IEnumerator SwitchToNewWeapon(int newIndex)//切换到新捡到的武器的协程
     {
         isSwitching = true;
 

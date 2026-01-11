@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,6 +10,7 @@ public class PlayerController : MonoBehaviour
     public CharacterController characterController;//获取角色控制器组件
     public Vector3 moveDirection;//人物移动方向
     private AudioSource audioSource;//音频源组件
+    private Vector3 impactVelocity; // 受击产生的瞬时速度
 
     private float verticalVelocity; // 专门处理 y 轴的速度
     private Vector3 airControlDirection; // 记录起跳瞬间的方向
@@ -39,11 +41,15 @@ public class PlayerController : MonoBehaviour
     public bool isCanCrouch;//是否可以蹲伏
     public bool isCouching;//是否正在蹲伏
     public bool isBlocked;//是否被阻挡
-    private bool playerisDead;//玩家是否死亡  
+    public bool playerisDead;//玩家是否死亡  
     private bool isDamage;//玩家是否受伤
+    public GameObject YouDied;//玩家死亡UI显示
 
     public LayerMask crouchLayerMask;//地面图层
     public Text playerHealthUI;//玩家生命值UI显示
+    public Image hurtImage;//受伤图片显示
+    private Color flashColor = new Color(1f, 0f, 0f, 0.5f);//受伤闪烁颜色
+    private Color clearColor = Color.clear;//透明颜色
 
     [Header("音效")]
     public AudioClip walkSound;//行走音效
@@ -62,11 +68,32 @@ public class PlayerController : MonoBehaviour
         playerHealth = 100f;
         standHeight = characterController .height;
         playerHealthUI.text = "Hp:" + playerHealth;
+        // 确保游戏开始时死亡 UI 是隐藏的
+        if (YouDied != null)
+        {
+            YouDied.gameObject.SetActive(false);
+        }
     }
 
 
     void Update()//60
     {
+        //玩家受到伤害后，屏幕产生红色闪烁效果
+        if (isDamage)
+        {
+            hurtImage.color = flashColor;
+        }
+        else
+        {
+            hurtImage.color = Color.Lerp(hurtImage.color, clearColor, 5f * Time.deltaTime);//逐渐淡出红色
+        }
+        isDamage = false;
+        if (playerisDead)
+        {
+            //游戏结束，停止一切操作
+            return;
+        }
+
         playerHealthUI.text = "Hp:" + playerHealth;
         isCanCrouch = CanCrouch();//判断是否可以蹲伏
         CheckGroundStatus(); // 优化后的地面检测
@@ -322,18 +349,18 @@ public class PlayerController : MonoBehaviour
     // 核心计算逻辑
     private Vector3 CalculateMovement()
     {
-        // --- 1. 处理水平输入 ---
+        // 处理水平输入
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
         Vector3 inputDir = (transform.right * h + transform.forward * v).normalized;
 
-        // --- 2. 状态与速度判定 ---
+        //状态与速度判定
         isRun = Input.GetKey(runInputName);
         if (isCouching) Speed = crouchSpeed;
         else if (isRun) Speed = runSpeed;
         else Speed = walkSpeed;
 
-        // --- 3. 核心分歧：地面 vs 空中 ---
+        //计算最终移动向量
         Vector3 horizontalMove;
 
         if (isGround)
@@ -364,8 +391,19 @@ public class PlayerController : MonoBehaviour
             verticalVelocity -= fallForce * Time.deltaTime;
         }
 
-        // --- 4. 合并最终向量 ---
-        return new Vector3(horizontalMove.x, verticalVelocity, horizontalMove.z);
+        if (impactVelocity.magnitude > 0.2f)
+        {
+            // 将冲击力加入最终移动向量
+            // 使用 Lerp 让冲击力迅速衰减
+            impactVelocity = Vector3.Lerp(impactVelocity, Vector3.zero, 5f * Time.deltaTime);
+        }
+        else
+        {
+            impactVelocity = Vector3.zero;
+        }
+
+        // 合并最终向量 
+        return new Vector3(horizontalMove.x, verticalVelocity, horizontalMove.z) + impactVelocity;
     }
 
 
@@ -375,16 +413,88 @@ public class PlayerController : MonoBehaviour
     /// <param name="damage"><接受到的伤害/param>
     public void PlayerHealth(float damage)
     {
+        if (playerisDead) return; // 防止重复执行死亡逻辑
+
         playerHealth -= damage;
         isDamage = true;
+
+        // 产生受击反冲效果
+        impactVelocity = -transform.forward * 1.5f * 10f;
+
         playerHealthUI.text = "Hp: " + playerHealth;
-        if (playerHealth <= 0 && !playerisDead)
+        if (playerHealth <= 0 )
         {
-            playerisDead = true;
-            Debug .Log ("Player is Dead!");
-            playerHealthUI.text = "Hp: 0, You Died.";
-            Time.timeScale = 0f;//暂停游戏
+            //playerisDead = true;
+            //Debug .Log ("Player is Dead!");
+            //playerHealthUI.text = "Hp: 0";
+            //Time.timeScale = 0f;//暂停游戏
+            Die();
         }
+    }
+    IEnumerator ExecuteAfterTime(float time)//协程等待指定秒数后执行方法
+    {
+        // 等待指定秒数
+        yield return new WaitForSeconds(time);
+
+        // 这里写你要执行的代码
+        Debug.Log("2秒时间到！执行逻辑。");
+    }
+    private void Die()
+    {
+        playerisDead = true;
+        playerHealth = 0;
+        playerHealthUI.text = "Hp: 0";
+
+        // --- 新增死亡 UI 显示 ---
+        if (YouDied != null)
+        {
+            YouDied.SetActive(true);
+            //YouDied.text = "YOU DIED"; // 或者在 Inspector 里预先写好
+            // 释放鼠标，让玩家可以点击按钮
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+
+        Debug.Log("Player is Dead!");
+
+        // 注意：Time.timeScale = 0f 会冻结整个游戏，包括 UI 动画
+        // 如果想要死亡后有淡入效果，可以不在这里立即暂停
+        Time.timeScale = 0f;
+    }
+    public void ResetStatus(Vector3 targetPos)
+    {
+        // 1. 恢复时间缩放（必须在移动前，否则某些物理计算会卡住）
+        Time.timeScale = 1f;
+
+        // 2. 彻底禁用组件（这是解决“原地复活”的关键）
+        characterController.enabled = false;
+
+        // 3. 强制更改位置
+        transform.position = targetPos;
+
+        // 4. 重置状态数值
+        playerHealth = 100f;
+        playerisDead = false;
+        verticalVelocity = 0f;
+        impactVelocity = Vector3.zero;
+
+        // 5. 更新 UI 显示
+        playerHealthUI.text = "Hp: " + playerHealth;
+
+        // 6. 隐藏整个死亡 UI 面板
+        if (YouDied != null)
+        {
+            YouDied.SetActive(false);
+        }
+
+        // 7. 重新锁定鼠标
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
+        // 8. 最后重新开启组件
+        characterController.enabled = true;
+
+        Debug.Log("复活成功，目标点: " + targetPos);
     }
 
 

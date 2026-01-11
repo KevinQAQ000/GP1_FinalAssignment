@@ -90,7 +90,7 @@ public class Enemy : MonoBehaviour
     {
         CheckForPlayer(); // 实时更新检测范围内的敌人
 
-        if (attackList.Count == 0)
+        if (attackList.Count == 0)//如果攻击目标列表为空，说明没有玩家在攻击范围内，继续巡逻
         {
             switch (enemyType)
             {
@@ -106,23 +106,30 @@ public class Enemy : MonoBehaviour
             }
             //如果攻击目标列表为空，说明没有玩家在攻击范围内，继续巡逻
             targetPosition = Vector3.MoveTowards(transform.position, wayPoints[index], agent.speed * Time.deltaTime);//计算朝目标点移动后的位置
+            agent.destination = wayPoints[index];
+            //if (wayPoints.Count > 0)
+            //{
+            //    agent.destination = wayPoints[index];
+            //}
+
         }
-        else
+        else//如果攻击目标列表不为空，说明有玩家在攻击范围内，朝玩家移动
         {
             switch (enemyType)
             {
                 case EnemyType.Bug:
-                    agent.speed = baseSpeed * 1.4f; // 恢复正常速度
+                    agent.speed = baseSpeed * 1.4f; 
                     break;
                 case EnemyType.Monster:
-                    agent.speed = baseSpeed * 1.2f; // 恢复正常速度
+                    agent.speed = baseSpeed * 1.2f;
                     break;
                 case EnemyType.Sicence_guys:
-                    agent.speed = baseSpeed * 1.6f; // 恢复正常速度
+                    agent.speed = baseSpeed * 1.6f;
                     break;
             }
-            targetPosition = Vector3.MoveTowards(transform.position, attackList[0].position, agent.speed * Time.deltaTime);//计算朝玩家移动后的位置
-            agent.destination = targetPosition;//设置导航代理的目标位置
+            //targetPosition = Vector3.MoveTowards(transform.position, attackList[0].position, agent.speed * Time.deltaTime);//计算朝玩家移动后的位置
+            //agent.destination = targetPosition;//设置导航代理的目标位置
+            agent.destination = attackList[0].position;
         }
     }
 
@@ -192,7 +199,7 @@ public class Enemy : MonoBehaviour
                         break;
                     case EnemyType.Monster:
                         //如果当前怪物的攻击ID是1，执行撞击攻击
-                        StartCoroutine(MonsterDashAttack(attackList[0].position));
+                        StartCoroutine(MonsterAttack(attackList[0].position));
                         break;
                     case EnemyType.Sicence_guys:
                         break;
@@ -296,7 +303,7 @@ public class Enemy : MonoBehaviour
         agent.isStopped = false;
     }
     //Todo: 实现怪物撞击攻击协程
-    IEnumerator MonsterDashAttack (Vector3 targetPos)
+    IEnumerator MonsterAttack(Vector3 targetPos)
     {
         return null;
     }
