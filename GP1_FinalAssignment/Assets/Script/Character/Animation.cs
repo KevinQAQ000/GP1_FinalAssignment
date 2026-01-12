@@ -4,7 +4,7 @@ public class Animation : MonoBehaviour
 {
     PlayerController playerController;
     public GameObject PivotPoint;
-    public float smoothSpeed = 10f; // 平滑速度，数值越大缩放越快
+    public float smoothSpeed = 10f; // Smoothing speed; the higher the value, the faster the scaling.
 
     private void Start()
     {
@@ -27,7 +27,7 @@ public class Animation : MonoBehaviour
             targetScale = new Vector3(1f, 1f, 1f);
         }
 
-        // 从当前的 localScale 逐渐移动到 targetScale
+        // Gradually move from the current localScale to targetScale
         PivotPoint.transform.localScale = Vector3.Lerp
         (
             PivotPoint.transform.localScale,

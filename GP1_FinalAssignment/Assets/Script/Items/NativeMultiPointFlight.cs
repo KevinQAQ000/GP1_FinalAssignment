@@ -4,18 +4,18 @@ using System.Collections.Generic;
 
 public class NativeMultiPointFlight : MonoBehaviour
 {
-    [Header("角色与座位")]
+    [Header("Character and Seating")]
     public Transform seat;
     public float mountSpeed = 3f;
 
-    [Header("飞行路径")]
+    [Header("Flight Path")]
     public List<Transform> waypoints;
     public float flySpeed = 5f;
     public float turnSpeed = 3f;
     public float arriveDistance = 0.5f;
 
-    [Header("自动返航设置")]
-    public float waitTimeAtDestination = 5f; // 到达终点后停多久
+    [Header("Auto Return Settings")]
+    public float waitTimeAtDestination = 5f; // Duration to wait after arriving at the final point
 
     private bool isFlying = false;
 
@@ -31,11 +31,12 @@ public class NativeMultiPointFlight : MonoBehaviour
     {
         isFlying = true;
 
-        // --- 1. 玩家上车 ---
+        // Player boarding logic
         CharacterController cc = player.GetComponent<CharacterController>();
-        if (cc) cc.enabled = false;
+        if (cc) cc.enabled = false; // Disable controller to prevent movement conflicts
         player.transform.SetParent(this.transform);
 
+        // Smoothly lerp the player into the seat position
         while (Vector3.Distance(player.transform.localPosition, seat.localPosition) > 0.01f)
         {
             player.transform.localPosition = Vector3.Lerp(player.transform.localPosition, seat.localPosition, Time.deltaTime * mountSpeed);
@@ -43,36 +44,36 @@ public class NativeMultiPointFlight : MonoBehaviour
             yield return null;
         }
 
-        // --- 2. 载人去程 ---
+        // Outbound flight with player
         yield return StartCoroutine(FlyRoute(false));
 
-        // --- 3. 到达终点：立即放玩家下来 ---
+        // Destination reached: Unmount the player immediately
         player.transform.SetParent(null);
         Vector3 currentEuler = player.transform.eulerAngles;
-        player.transform.eulerAngles = new Vector3(0f, currentEuler.y, 0f);
+        player.transform.eulerAngles = new Vector3(0f, currentEuler.y, 0f); // Keep player upright
 
-        // 确保玩家被推开一点，防止再次碰到触发器
+        // Push the player away slightly to prevent re-triggering the flight immediately
         Vector3 exitPosition = transform.position + (transform.right * 3f) + (Vector3.up * 1f);
         player.transform.position = exitPosition;
 
         if (cc) cc.enabled = true;
-        Debug.Log("已到达终点，玩家已下车。载具开始等待返航...");
+        Debug.Log("Destination reached, player unmounted. Vehicle waiting to return...");
 
-        // --- 4. 载具原地等待 ---
+        // Vehicle waits at the destination
         yield return new WaitForSeconds(waitTimeAtDestination);
 
-        // --- 5. 载具自动原路返回 (无人) ---
+        // Vehicle returns to start automatically (empty)
         yield return StartCoroutine(FlyRoute(true));
 
-        Debug.Log("载具已回到起点，准备下一次任务");
+        Debug.Log("Vehicle returned to start, ready for next mission.");
         isFlying = false;
     }
 
-    // 核心飞行逻辑
+    // Core flight logic
     IEnumerator FlyRoute(bool reverse)
     {
-        // 反向时：从倒数第二个点开始回溯到第0个点
-        // 正向时：从第0个点到最后一个点
+        // Reverse: Trace back from the last waypoint to the first (index 0)
+        // Forward: Move from the first waypoint to the last
         int start = reverse ? waypoints.Count - 1 : 0;
         int end = reverse ? -1 : waypoints.Count;
         int step = reverse ? -1 : 1;
@@ -82,8 +83,10 @@ public class NativeMultiPointFlight : MonoBehaviour
             Transform targetPoint = waypoints[i];
             while (Vector3.Distance(transform.position, targetPoint.position) > arriveDistance)
             {
+                // Move towards the target
                 transform.position = Vector3.MoveTowards(transform.position, targetPoint.position, flySpeed * Time.deltaTime);
 
+                // Rotate towards the target
                 Vector3 direction = (targetPoint.position - transform.position).normalized;
                 if (direction != Vector3.zero)
                 {

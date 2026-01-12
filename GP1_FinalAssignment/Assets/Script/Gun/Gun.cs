@@ -4,23 +4,24 @@ using UnityEngine;
 public class Gun : MonoBehaviour
 {
     [Header("Bullets")]
-    public Bullet BulletPrefab;//调用子弹预制体
-    public Transform FirePoint;//子弹发射点
-    [Header("Reload")]
-    public float ReloadTime = 1f;//记录子弹发射后到达下一子弹发射的时间
-    public float ReloadTimer = 0f;//每颗子弹的发射间隔
+    public Bullet BulletPrefab; // Reference to the bullet prefab
+    public Transform FirePoint; // Point where the bullet spawns
+
+    [Header("Reload/Fire Rate")]
+    public float ReloadTime = 1f; // The current cooldown remaining before the next shot
+    public float ReloadTimer = 0f; // The fixed delay between shots (Fire Rate)
 
     [Header("Audio")]
-    public AudioSource GunAudio;//枪声音频源
-    public AudioClip ShootClip;//开火音效   
+    public AudioSource GunAudio; // Reference to the AudioSource component
+    public AudioClip ShootClip; // Audio clip for the firing sound
 
     [Header("ScreenShake")]
-    public CinemachineImpulseSource GunShake;//枪震动 
+    public CinemachineImpulseSource GunShake; // Cinemachine Impulse for camera shake
 
     [Header("GunType")]
-    public GunType gunType;//枪类型
+    public GunType gunType; // Current selected gun type
 
-    public enum GunType //枚举枪类型
+    public enum GunType // Enum to define different firing behaviors
     {
         Pistol,
         Rifle,
@@ -30,68 +31,74 @@ public class Gun : MonoBehaviour
 
     void Update()
     {
-        ReloadTime -= Time.deltaTime;//计时器累加 
+        // Countdown the reload timer based on real time
+        ReloadTime -= Time.deltaTime;
 
-        if (ReloadTime > 0f) //如果你的子弹倒计时没有归零，是不能发射子弹的
-            return;//如果计时器大于0 则返回
+        // If the cooldown hasn't finished, prevent firing
+        if (ReloadTime > 0f)
+            return;
 
-        switch (gunType)//根据枪类型选择不同的发射方式
+        // Determine firing logic based on the selected gun type
+        switch (gunType)
         {
             case GunType.Pistol:
-                ReloadTimer = 0.5f;//手枪发射间隔0,5秒
-                if (Input.GetMouseButtonDown(0))//鼠标左键按下
+                ReloadTimer = 0.5f; // Semi-auto: 0.5s delay
+                if (Input.GetMouseButtonDown(0)) // Triggered on initial click
                 {
-                    ReloadTime = ReloadTimer;//重置计时器
-                                             //实例化子弹 设置开始位置 和旋转 
-                    Instantiate(BulletPrefab, FirePoint.position, FirePoint.rotation);//实例化子弹 初始化
-                    GunShake.GenerateImpulse();//枪震动
+                    Fire();
                 }
                 break;
+
             case GunType.Rifle:
-                ReloadTimer = 0.1f;//步枪发射间隔0.1秒
-                if (Input.GetMouseButton(0))//鼠标左键按下
+                ReloadTimer = 0.1f; // Full-auto: 0.1s delay
+                if (Input.GetMouseButton(0)) // Triggered while holding down
                 {
-                    ReloadTime = ReloadTimer;//重置计时器
-                                             //实例化子弹 设置开始位置 和旋转 
-                    Instantiate(BulletPrefab, FirePoint.position, FirePoint.rotation);//实例化子弹 初始化
-                    GunShake.GenerateImpulse();//枪震动
+                    Fire();
                 }
                 break;
+
             case GunType.SubmachineGun:
-                ReloadTimer = 0.05f;//冲锋枪发射间隔0.05秒
-                if (Input.GetMouseButton(0))//鼠标左键按下
+                ReloadTimer = 0.05f; // High fire rate: 0.05s delay
+                if (Input.GetMouseButton(0))
                 {
-                    ReloadTime = ReloadTimer;//重置计时器
-                                             //实例化子弹 设置开始位置 和旋转 
-                    Instantiate(BulletPrefab, FirePoint.position, FirePoint.rotation);//实例化子弹 初始化
-                    GunShake.GenerateImpulse();//枪震动
+                    Fire();
                 }
                 break;
+
             case GunType.Shotgun:
-                ReloadTimer = 1f;//霰弹枪发射间隔1秒
-                if (Input.GetMouseButtonDown(0))//鼠标左键按下
+                ReloadTimer = 1f; // Slow fire rate: 1s delay
+                if (Input.GetMouseButtonDown(0))
                 {
-                    ReloadTime = ReloadTimer;//重置计时器
-                    //霰弹枪发射5颗子弹，模拟散射效果
+                    ReloadTime = ReloadTimer;
+
+                    // Spawn 5 bullets with randomized spread to simulate a shotgun blast
                     for (int i = 0; i < 5; i++)
                     {
-                        //计算每颗子弹的偏移角度
+                        // Calculate a random offset for the spread
                         float spreadAngle = Random.Range(-10f, 10f);
                         Quaternion spreadRotation = Quaternion.Euler(FirePoint.rotation.eulerAngles + new Vector3(0, spreadAngle, 0));
-                        //实例化子弹 设置开始位置 和旋转 
-                        Instantiate(BulletPrefab, FirePoint.position, spreadRotation);//实例化子弹 初始化
-                    }
-                    GunShake.GenerateImpulse();//枪震动
-                }
 
+                        // Instantiate bullet with spread rotation
+                        Instantiate(BulletPrefab, FirePoint.position, spreadRotation);
+                    }
+                    TriggerEffects();
+                }
                 break;
         }
-        //GunAudio.PlayOneShot(ShootClip);//播放开火音效
-        //枪械震动
-
     }
-    //public void Explode()//枪械震动
-    //{
-    //    GunShake.GenerateImpulse();
-    //}
+
+    // Helper method to handle standard firing logic
+    private void Fire()
+    {
+        ReloadTime = ReloadTimer; // Reset the cooldown
+        Instantiate(BulletPrefab, FirePoint.position, FirePoint.rotation); // Spawn the bullet
+        TriggerEffects();
+    }
+
+    // Helper method to trigger screen shake and audio
+    private void TriggerEffects()
+    {
+        if (GunShake != null) GunShake.GenerateImpulse(); // Trigger camera shake
+        if (GunAudio != null && ShootClip != null) GunAudio.PlayOneShot(ShootClip); // Play sound
+    }
 }

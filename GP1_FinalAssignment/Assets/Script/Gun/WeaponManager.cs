@@ -8,34 +8,37 @@ public class WeaponManager : MonoBehaviour
     private int currentWeaponIndex = -1;
 
     [Header("Animation Settings")]
-    public float switchSpeed = 8f;//切换速度
-    public float dropDistance = 0.5f;//向下移动的距离
-    private bool isSwitching = false;//是否正在切换中
+    public float switchSpeed = 8f; // Speed of the switching animation
+    public float dropDistance = 0.5f; // Distance the weapon moves down during switch
+    private bool isSwitching = false; // Flag to check if a switch is currently in progress
 
-    private Vector3 originalLocalPos;//记录武器的初始局部坐标
+    private Vector3 originalLocalPos; // Stores the initial local position of the weapons
     public PlayerController PlayerController;
 
     void Start()
     {
         hasWeapon = new bool[weapons.Length];
-        //假设两把枪的初始相对位置是一样的
+
+        // Assuming all weapons share the same relative starting position
         if (weapons.Length > 0) originalLocalPos = weapons[0].transform.localPosition;
+
         PlayerController = GetComponent<PlayerController>();
     }
 
     void Update()
     {
-        if(PlayerController.playerisDead)
+        if (PlayerController.playerisDead)
         {
-            
+            return;
         }
 
-        if (isSwitching) return; //如果正在切枪，不接受新输入
+        // Ignore input if currently switching weapons
+        if (isSwitching) return;
 
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll != 0)
         {
-            //只有拥有两把枪时才启动协程
+            // Only trigger switch if the player owns at least two weapons
             int ownedCount = 0;
             foreach (bool b in hasWeapon) if (b) ownedCount++;
 
@@ -46,29 +49,30 @@ public class WeaponManager : MonoBehaviour
         }
     }
 
-    IEnumerator SwitchWeaponRoutine()//切换武器的协程
+    // Coroutine for the standard weapon switching sequence
+    IEnumerator SwitchWeaponRoutine()
     {
         isSwitching = true;
 
-        //下拉当前武器
+        // Move the current weapon down
         yield return StartCoroutine(MoveWeapon(weapons[currentWeaponIndex], originalLocalPos - new Vector3(0, dropDistance, 0)));
         weapons[currentWeaponIndex].SetActive(false);
 
-        //切换索引
+        // Toggle index (cycles between 0 and 1 for a 2-weapon setup)
         currentWeaponIndex = (currentWeaponIndex == 0) ? 1 : 0;
 
-        //准备新武器（先设为下方位置，再显示）
+        // Prepare the new weapon (set position to bottom before enabling)
         weapons[currentWeaponIndex].transform.localPosition = originalLocalPos - new Vector3(0, dropDistance, 0);
         weapons[currentWeaponIndex].SetActive(true);
 
-        //上抬新武器
+        // Move the new weapon up to the original position
         yield return StartCoroutine(MoveWeapon(weapons[currentWeaponIndex], originalLocalPos));
 
         isSwitching = false;
     }
 
-    //移动武器的辅助协程
-    IEnumerator MoveWeapon(GameObject weapon, Vector3 targetPos)//将武器移动到目标位置
+    // Helper coroutine to smoothly interpolate weapon movement
+    IEnumerator MoveWeapon(GameObject weapon, Vector3 targetPos)
     {
         while (Vector3.Distance(weapon.transform.localPosition, targetPos) > 0.01f)
         {
@@ -78,48 +82,49 @@ public class WeaponManager : MonoBehaviour
         weapon.transform.localPosition = targetPos;
     }
 
-    public void UnlockWeapon(int index)//解锁武器的方法
+    // Method to unlock/pick up a weapon
+    public void UnlockWeapon(int index)
     {
-        //如果已经拥有该武器，直接返回（防止重复触发）
+        // Return if the weapon is already owned to prevent redundant triggers
         if (hasWeapon[index]) return;
 
         hasWeapon[index] = true;
 
-        //这是捡到的第一把武器
+        // Logic for picking up the very first weapon
         if (currentWeaponIndex == -1)
         {
             currentWeaponIndex = index;
             weapons[currentWeaponIndex].SetActive(true);
             weapons[currentWeaponIndex].transform.localPosition = originalLocalPos;
         }
-        //手里已经有武器了，自动切到新捡到的这一把
+        // If already holding a weapon, automatically switch to the newly picked one
         else
         {
-            //停止当前可能正在进行的切枪协程，防止冲突
+            // Stop any ongoing switch routines to prevent conflicts
             StopAllCoroutines();
 
-            //启动切换到新武器的协程
+            // Start the specific routine for switching to a newly acquired weapon
             StartCoroutine(SwitchToNewWeapon(index));
         }
     }
 
-    //专门为“拾取”设计的切换逻辑
-    IEnumerator SwitchToNewWeapon(int newIndex)//切换到新捡到的武器的协程
+    // Coroutine designed specifically for the "Pick Up" switch logic
+    IEnumerator SwitchToNewWeapon(int newIndex)
     {
         isSwitching = true;
 
-        //下拉当前老武器
+        // Move the old weapon down
         yield return StartCoroutine(MoveWeapon(weapons[currentWeaponIndex], originalLocalPos - new Vector3(0, dropDistance, 0)));
         weapons[currentWeaponIndex].SetActive(false);
 
-        //更新索引为新捡到的武器
+        // Update the index to the new weapon
         currentWeaponIndex = newIndex;
 
-        //准备新武器
+        // Prepare and show the new weapon
         weapons[currentWeaponIndex].transform.localPosition = originalLocalPos - new Vector3(0, dropDistance, 0);
         weapons[currentWeaponIndex].SetActive(true);
 
-        //上抬新武器
+        // Move the new weapon up
         yield return StartCoroutine(MoveWeapon(weapons[currentWeaponIndex], originalLocalPos));
 
         isSwitching = false;

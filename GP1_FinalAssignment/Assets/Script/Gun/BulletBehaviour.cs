@@ -2,15 +2,22 @@ using UnityEngine;
 
 public class BulletBehavior : MonoBehaviour
 {
-    public GameObject hitEffectPrefab; // 在编辑器里拖入火花特效
-    // 当子弹碰到带有 Collider 的物体时触发
+    [Tooltip("Prefab for the impact visual effect (e.g., sparks)")]
+    public GameObject hitEffectPrefab;
+
+    // Triggered when the bullet's Collider interacts with another Collider
     private void OnCollisionEnter(Collision collision)
     {
         if (hitEffectPrefab != null)
         {
+            // Get the first point of contact
             ContactPoint contact = collision.contacts[0];
+
+            // Spawn the effect at the contact point, rotated to face outward from the surface
             Instantiate(hitEffectPrefab, contact.point, Quaternion.LookRotation(contact.normal));
         }
+
+        // Remove the bullet from the scene
         Destroy(gameObject);
     }
 }

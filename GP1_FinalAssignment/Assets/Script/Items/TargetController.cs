@@ -3,78 +3,81 @@ using System.Collections;
 
 public class Target : MonoBehaviour
 {
-    public float health = 100f;// 初始血量
-    private bool isDead = false;// 是否已经倒下
-    private Quaternion originalRotation; // 记录初始旋转
-    private float maxHealth = 100f;// 最大血量
+    public float health = 100f;            // Initial health
+    private bool isDead = false;           // Tracks if the target has fallen
+    private Quaternion originalRotation;   // Stores the starting rotation for resetting
+    private float maxHealth = 100f;        // Stores maximum health for restoration
 
     void Start()
     {
-        // 记录初始旋转，用于后续回正
-        originalRotation = transform.rotation;//初始化旋转信息
-        maxHealth = health;//初始化最大血量
+        // Record initial rotation to ensure accurate resetting later
+        originalRotation = transform.rotation;
+        // Initialize maxHealth based on the assigned health value
+        maxHealth = health;
     }
 
-    public void TakeDamage(float damage, Vector3 hitPoint)//接收伤害的方法 传入伤害值和击中点
+    public void TakeDamage(float damage, Vector3 hitPoint) // Receives damage value and hit position
     {
-        // 如果已经倒下了，就不再接收伤害
+        // If the target is already down, ignore further damage
         if (isDead) return;
 
-        health -= damage;//扣除血量 
-        Debug.Log($"靶子被射线击中！扣除 {damage} 血量，剩余: {health}");
+        health -= damage; // Subtract health
+        Debug.Log($"Target hit! Damage: {damage}, Remaining: {health}");
 
         if (health <= 0)
         {
-            // 将世界空间的击中点转换为靶子的本地空间坐标
+            // Convert the world space hit point to the target's local space
             Vector3 localHitPoint = transform.InverseTransformPoint(hitPoint);
-            // 传入本地坐标的 Z 值，判断是从前还是后击中的
+            // Use the local Z value to determine if the hit came from the front or back
             Die(localHitPoint.z);
         }
     }
 
-    void Die(float hitZ)//靶子倒下的方法 传入击中点的本地Z轴位置
+    void Die(float hitZ) // Handles the falling logic based on local Z-axis hit position
     {
-        isDead = true;//标记为已倒下
+        isDead = true; // Mark as down
 
-        // 逻辑：根据击中点的 Z 轴位置决定绕 X 轴倒下的方向
-        // hitZ > 0 说明击中点在靶子前方，靶子往后倒 (-90度)
+        // Logic: Determine rotation direction around X-axis based on hit side
+        // hitZ > 0 means hit from front, fall backward (-90 degrees)
+        // hitZ < 0 means hit from back, fall forward (90 degrees)
         float angle = hitZ > 0 ? -90f : 90f;
         Quaternion targetRotation = originalRotation * Quaternion.Euler(angle, 0, 0);
 
-        StopAllCoroutines();// 停止之前的协程，防止多次触发时出现冲突
-        StartCoroutine(HandleTargetCycle(targetRotation));// 启动协程处理倒下和回正的过程
+        StopAllCoroutines(); // Stop any active routines to prevent movement conflicts
+        StartCoroutine(HandleTargetCycle(targetRotation)); // Begin the fall, wait, and reset cycle
     }
 
-    IEnumerator HandleTargetCycle(Quaternion targetRotation)//协程处理靶子倒下、等待和回正的过程
+    IEnumerator HandleTargetCycle(Quaternion targetRotation) // Manages the animation sequence
     {
-        //平滑倒下
+        // Smooth Fall
         float elapsed = 0;
-        Quaternion startRotation = transform.rotation;//记录当前旋转
-        while (elapsed < 0.3f)//倒下过程持续0.3秒
+        Quaternion startRotation = transform.rotation; // Capture current rotation
+        while (elapsed < 0.3f) // Fall duration: 0.3 seconds
         {
-            transform.rotation = Quaternion.Slerp(startRotation, targetRotation, elapsed / 0.3f);//插值计算当前旋转
+            // Spherical linear interpolation for smooth rotation
+            transform.rotation = Quaternion.Slerp(startRotation, targetRotation, elapsed / 0.3f);
             elapsed += Time.deltaTime;
             yield return null;
         }
-        transform.rotation = targetRotation;//确保最终旋转精确
+        transform.rotation = targetRotation; // Ensure final rotation is exact
 
-        //等待 4 秒 (根据你的需求，之前是3秒，这里设为4)
+        // Wait for 4 seconds before resetting
         yield return new WaitForSeconds(4f);
 
-        //平滑回正
+        // Smooth Reset
         elapsed = 0;
         Quaternion currentRotation = transform.rotation;
-        while (elapsed < 0.5f)
+        while (elapsed < 0.5f) // Reset duration: 0.5 seconds
         {
             transform.rotation = Quaternion.Slerp(currentRotation, originalRotation, elapsed / 0.5f);
             elapsed += Time.deltaTime;
             yield return null;
         }
-        transform.rotation = originalRotation;
+        transform.rotation = originalRotation; // Return to original state
 
-        //重置状态，准备下一次被击中
+        // Reset variables for the next interaction
         health = maxHealth;
         isDead = false;
-        Debug.Log("靶子已复位。");
+        Debug.Log("Target has reset.");
     }
 }

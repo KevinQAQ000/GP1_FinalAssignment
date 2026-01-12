@@ -4,45 +4,48 @@ using UnityEngine.Rendering;
 
 public class Bullet : MonoBehaviour
 {
-
     public Rigidbody Rigidbody;
     [Range(0f, 500f)]
-    public float Speed = 10f; //Speed of the bullet
-    public AudioClip CasingAudioClip;//子弹落地音效
-    private AudioSource audioSource;//音频源组件
+    public float Speed = 10f; // Speed of the bullet
+    public AudioClip CasingAudioClip; // Sound effect for the bullet casing hitting the ground
+    private AudioSource audioSource; // Reference to the AudioSource component
 
-    private bool hasPlayedSound = false; //防止多次碰撞导致音效重叠
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    private bool hasPlayedSound = false; // Prevents overlapping sound effects from multiple collisions
+
+    // Start is called before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        audioSource = gameObject.AddComponent<AudioSource>();//添加音频源组件
-        Rigidbody.linearVelocity = transform.forward * Speed;//直线速度 自动往前方飞
-        Destroy(gameObject, 3f); //3秒后销毁子弹，防止内存泄漏
+        // Add an AudioSource component dynamically
+        audioSource = gameObject.AddComponent<AudioSource>();
+
+        // Set linear velocity to move forward automatically
+        Rigidbody.linearVelocity = transform.forward * Speed;
+
+        // Destroy the bullet after 3 seconds to prevent memory leaks
+        Destroy(gameObject, 3f);
     }
+
     private void OnCollisionEnter(Collision collision)
     {
         if (!hasPlayedSound)
         {
-            hasPlayedSound = true; //标记已播放
+            hasPlayedSound = true; // Mark as played to prevent repeats
             StartCoroutine(PlayCasingSoundDelayed(0.5f));
-
         }
     }
 
-    // 协程函数
+    // Coroutine to play sound after a short delay
     IEnumerator PlayCasingSoundDelayed(float delay)
     {
         yield return new WaitForSeconds(delay);
 
         if (CasingAudioClip != null && audioSource != null)
         {
-            //随机化音量
+            // Randomize volume for more natural sound
             float randomVol = Random.Range(0.5f, 0.8f);
 
-            //PlayOneShot 的第二个参数就是音量缩放 (0.0 到 1.0)
+            // PlayOneShot's second parameter is the volume scale (0.0 to 1.0)
             audioSource.PlayOneShot(CasingAudioClip, randomVol);
         }
     }
-
-
 }

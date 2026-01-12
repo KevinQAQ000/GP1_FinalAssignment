@@ -6,9 +6,10 @@ public class Checkpoint : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            // 更新玩家的当前复活点
+            // Update the player's current respawn point
             DeathMenu.lastCheckpointPos = transform.position;
-            Debug.Log("复活点已更新: " + transform.position);
+
+            Debug.Log("Checkpoint updated to: " + transform.position);
         }
     }
 }

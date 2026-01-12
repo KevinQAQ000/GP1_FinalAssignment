@@ -1,41 +1,43 @@
 using Unity.VisualScripting;
 using UnityEngine;
 
-
 /// <summary>
-/// 敌人进入巡逻状态
+/// Enemy enters the patrol state.
 /// </summary>
-/// 
 public class PatrolState : EnemyBaseState
 {
     public override void EnemyState(Enemy enemy)
     {
-        //随机加载敌人巡逻路线
+        // Randomly load the enemy's patrol path
         enemy.LoadPath(enemy.wayPointObj[WaypointManager.Instance.usingIndex[enemy.nameIndex]]);
     }
 
     public override void OnUpdate(Enemy enemy)
     {
-        enemy.MoveToTarget();//让敌人朝当前导航点移动
-        //计算敌人当前位置与当前导航点的距离
+        // Move the enemy toward the current waypoint
+        enemy.MoveToTarget();
+
+        // Calculate the distance between the enemy's current position and the current waypoint
         float distance = Vector3.Distance(enemy.transform.position, enemy.wayPoints[enemy.index]);
-        if (distance <= 0.5f)//如果距离小于0.5米，说明到达当前导航点
+
+        // If the distance is less than 0.5m, the enemy has reached the current waypoint
+        if (distance <= 0.5f)
         {
-           enemy.index++;//下标值加1，指向下一个导航点
-           if (enemy.index >= enemy.wayPoints.Count)//如果下标值超出范围
-           {
-               enemy.index = 0;//重置下标值，重新开始巡逻
-           }
+            // Increment the index to point to the next waypoint
+            enemy.index++;
+
+            // If the index goes out of bounds, reset it to restart the patrol loop
+            if (enemy.index >= enemy.wayPoints.Count)
+            {
+                enemy.index = 0;
+            }
         }
         //Debug.Log(distance);
 
-        //To do: 巡逻状态切换到攻击状态
+        // Transition from Patrol State to Attack State if targets are detected
         if (enemy.attackList.Count > 0)
         {
             enemy.TransitionToState(enemy.attackState);
         }
-
     }
-
-
 }
