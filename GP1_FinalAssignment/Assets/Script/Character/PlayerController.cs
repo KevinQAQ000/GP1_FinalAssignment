@@ -66,6 +66,8 @@ public class PlayerController : MonoBehaviour
     public float deathYThreshold = -10f; // 掉到多深算“掉下悬崖”
     private float fallTimer = 0f;        // 掉落计时器
 
+    private Vector3 lastDeathPosition; // 记录死亡时的坐标
+
     void Start()
     {
         characterController = GetComponent<CharacterController>();//获取角色控制器组件
@@ -88,6 +90,7 @@ public class PlayerController : MonoBehaviour
     }
 
     private bool isTouchingWinObject = false; // 新增变量：是否正触碰获胜物体
+    private Vector3 lastSafeGroundPosition;
     void Update()//60
     {
         //玩家受到伤害后，屏幕产生红色闪烁效果
@@ -150,7 +153,18 @@ public class PlayerController : MonoBehaviour
             // 离开区域后计时器缓慢回落
             winTimer = Mathf.Max(0, winTimer - Time.deltaTime);
         }
+        if (isGround && !playerisDead && !isCouching)
+        {
+            lastDeathPosition = transform.position;
+            lastSafeGroundPosition = transform.position;
+        }
     }
+
+    public void RespawnAtSafePoint()
+    {
+        ResetStatus(lastDeathPosition);
+    }
+
     private void FixedUpdate()//50
     {
     }
@@ -496,63 +510,82 @@ public class PlayerController : MonoBehaviour
         // 这里写你要执行的代码
         Debug.Log("2秒时间到！执行逻辑。");
     }
+
     private void Die()
     {
         playerisDead = true;
         playerHealth = 0;
         playerHealthUI.text = "Hp: 0";
 
-        // --- 新增死亡 UI 显示 ---
+        // --- 核心修改：如果是掉下悬崖，记录安全点；如果是被打死，记录当前点 ---
+        if (transform.position.y < deathYThreshold)
+        {
+            lastDeathPosition = lastSafeGroundPosition;
+        }
+        else
+        {
+            lastDeathPosition = transform.position;
+        }
+
+        Debug.Log("已记录复活位置: " + lastDeathPosition);
+
         if (YouDied != null)
         {
             YouDied.SetActive(true);
-            //YouDied.text = "YOU DIED"; // 或者在 Inspector 里预先写好
-            // 释放鼠标，让玩家可以点击按钮
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
 
-        Debug.Log("Player is Dead!");
-
-        // 注意：Time.timeScale = 0f 会冻结整个游戏，包括 UI 动画
-        // 如果想要死亡后有淡入效果，可以不在这里立即暂停
-        Time.timeScale = 0f;
+        Time.timeScale = 0f; // 暂停游戏
     }
+
     public void ResetStatus(Vector3 targetPos)
     {
-        // 1. 恢复时间缩放（必须在移动前，否则某些物理计算会卡住）
         Time.timeScale = 1f;
-
-        // 2. 彻底禁用组件（这是解决“原地复活”的关键）
         characterController.enabled = false;
 
-        // 3. 强制更改位置
-        transform.position = targetPos;
-
-        // 4. 重置状态数值
-        playerHealth = 100f;
-        playerisDead = false;
-        verticalVelocity = 0f;
-        impactVelocity = Vector3.zero;
-
-        // 5. 更新 UI 显示
-        playerHealthUI.text = "Hp: " + playerHealth;
-
-        // 6. 隐藏整个死亡 UI 面板
-        if (YouDied != null)
+        // --- 安全保底逻辑 ---
+        // 如果死亡坐标因为某种原因变成无效值，则尝试复活在原点(0,5,0)防止报错
+        if (float.IsInfinity(targetPos.x) || float.IsNaN(targetPos.x))
         {
-            YouDied.SetActive(false);
+            Debug.LogWarning("死亡坐标无效，强制复活在默认出生点");
+            targetPos = new Vector3(0, 5, 0);
         }
 
-        // 7. 重新锁定鼠标
+        transform.position = targetPos;
+
+        // 重置物理速度
+        verticalVelocity = 0f;
+        impactVelocity = Vector3.zero;
+        moveDirection = Vector3.zero;
+
+        // 重置状态
+        playerHealth = 100f;
+        playerisDead = false;
+        fallTimer = 0f;
+
+        if (playerHealthUI != null) playerHealthUI.text = "Hp: " + playerHealth;
+        if (YouDied != null) YouDied.SetActive(false);
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // 8. 最后重新开启组件
         characterController.enabled = true;
-
-        Debug.Log("复活成功，目标点: " + targetPos);
     }
+
+    /// <summary>
+    /// UI 按钮绑定的方法：复活在死亡点
+    /// </summary>
+    public void RespawnAtDeathPoint()
+    {
+        // 在死亡位置的基础上抬高 1.5 米，防止由于坐标太精准导致卡进地板
+        Vector3 spawnPos = lastDeathPosition + Vector3.up * 1.5f;
+
+        // 调用你已有的 ResetStatus 统筹重置
+        ResetStatus(spawnPos);
+    }
+
+
 
     private void OnTriggerStay(Collider other)
     {

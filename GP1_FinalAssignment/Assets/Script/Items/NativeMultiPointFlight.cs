@@ -5,14 +5,17 @@ using System.Collections.Generic;
 public class NativeMultiPointFlight : MonoBehaviour
 {
     [Header("角色与座位")]
-    public Transform seat;           // 角色在车内的固定位置
-    public float mountSpeed = 3f;      // 角色坐下的速度
+    public Transform seat;
+    public float mountSpeed = 3f;
 
     [Header("飞行路径")]
-    public List<Transform> waypoints; // 所有的路点
-    public float flySpeed = 5f;       // 飞行速度
-    public float turnSpeed = 3f;      // 转向平滑度
-    public float arriveDistance = 0.5f; // 到达阈值
+    public List<Transform> waypoints;
+    public float flySpeed = 5f;
+    public float turnSpeed = 3f;
+    public float arriveDistance = 0.5f;
+
+    [Header("自动返航设置")]
+    public float waitTimeAtDestination = 5f; // 到达终点后停多久
 
     private bool isFlying = false;
 
@@ -20,24 +23,19 @@ public class NativeMultiPointFlight : MonoBehaviour
     {
         if (other.CompareTag("Player") && !isFlying)
         {
-            StartCoroutine(StartFlightProcess(other.gameObject));
+            StartCoroutine(MainFlightRoutine(other.gameObject));
         }
     }
 
-    IEnumerator StartFlightProcess(GameObject player)
+    IEnumerator MainFlightRoutine(GameObject player)
     {
         isFlying = true;
 
-        ////玩家进入逻辑
+        // --- 1. 玩家上车 ---
         CharacterController cc = player.GetComponent<CharacterController>();
-        //玩家碰撞体消失
-        player.GetComponent<CharacterController>().enabled = false;
-
-        //if (cc) cc.enabled = false;
-
+        if (cc) cc.enabled = false;
         player.transform.SetParent(this.transform);
 
-        //平滑上车
         while (Vector3.Distance(player.transform.localPosition, seat.localPosition) > 0.01f)
         {
             player.transform.localPosition = Vector3.Lerp(player.transform.localPosition, seat.localPosition, Time.deltaTime * mountSpeed);
@@ -45,15 +43,47 @@ public class NativeMultiPointFlight : MonoBehaviour
             yield return null;
         }
 
-        //逐点飞行逻辑
-        foreach (Transform targetPoint in waypoints)
+        // --- 2. 载人去程 ---
+        yield return StartCoroutine(FlyRoute(false));
+
+        // --- 3. 到达终点：立即放玩家下来 ---
+        player.transform.SetParent(null);
+        Vector3 currentEuler = player.transform.eulerAngles;
+        player.transform.eulerAngles = new Vector3(0f, currentEuler.y, 0f);
+
+        // 确保玩家被推开一点，防止再次碰到触发器
+        Vector3 exitPosition = transform.position + (transform.right * 3f) + (Vector3.up * 1f);
+        player.transform.position = exitPosition;
+
+        if (cc) cc.enabled = true;
+        Debug.Log("已到达终点，玩家已下车。载具开始等待返航...");
+
+        // --- 4. 载具原地等待 ---
+        yield return new WaitForSeconds(waitTimeAtDestination);
+
+        // --- 5. 载具自动原路返回 (无人) ---
+        yield return StartCoroutine(FlyRoute(true));
+
+        Debug.Log("载具已回到起点，准备下一次任务");
+        isFlying = false;
+    }
+
+    // 核心飞行逻辑
+    IEnumerator FlyRoute(bool reverse)
+    {
+        // 反向时：从倒数第二个点开始回溯到第0个点
+        // 正向时：从第0个点到最后一个点
+        int start = reverse ? waypoints.Count - 1 : 0;
+        int end = reverse ? -1 : waypoints.Count;
+        int step = reverse ? -1 : 1;
+
+        for (int i = start; i != end; i += step)
         {
+            Transform targetPoint = waypoints[i];
             while (Vector3.Distance(transform.position, targetPoint.position) > arriveDistance)
             {
-                // 位移
                 transform.position = Vector3.MoveTowards(transform.position, targetPoint.position, flySpeed * Time.deltaTime);
 
-                // 转向优化：强制向上向量为 Vector3.up，防止飞行器自身倾斜
                 Vector3 direction = (targetPoint.position - transform.position).normalized;
                 if (direction != Vector3.zero)
                 {
@@ -63,29 +93,5 @@ public class NativeMultiPointFlight : MonoBehaviour
                 yield return null;
             }
         }
-
-        //到达终点下车逻辑
-        // 脱离父子关系
-        player.transform.SetParent(null);
-
-        // 修正角色旋转角度
-        // 获取当前欧拉角，只保留 Y 轴，强制将 X 和 Z 轴归零（防止歪斜）
-        Vector3 currentEuler = player.transform.eulerAngles;
-        player.transform.eulerAngles = new Vector3(0f, currentEuler.y, 0f);
-        // ------------------------------
-
-        // 强制将玩家瞬移到车外空地
-        Vector3 exitPosition = transform.position + (transform.right * 3f) + (Vector3.up * 1f);
-        player.transform.position = exitPosition;
-
-        // 恢复控制
-        player.GetComponent<CharacterController>().enabled = true;
-        //if (cc) cc.enabled = true;
-
-        Debug.Log("到达终点，角色已扶正并下车");
-
-        // 防止瞬间再次触发
-        yield return new WaitForSeconds(5f);
-        isFlying = false;
     }
 }
