@@ -2,25 +2,26 @@ using UnityEngine;
 
 public class SimpleWalkAnimation : MonoBehaviour
 {
-    [Header("腿部引用")]
+    [Header("Leg References")]
     public Transform leftLeg;
     public Transform rightLeg;
 
-    [Header("走路设置")]
-    public float speed = 5.0f;      // 摆动速度
-    public float maxAngle = 30.0f;  // 最大摆动角度
+    [Header("Walking Settings")]
+    public float speed = 5.0f;      // Speed of the oscillation
+    public float maxAngle = 30.0f;  // Maximum angle of the swing
 
     void Update()
     {
-        // 使用 Mathf.Sin 随时间产生 -1 到 1 的变化
-        // Time.time * speed 决定了步伐的快慢
+        // Use Mathf.Sin to generate a value between -1 and 1 over time
+        // Time.time * speed determines the pace of the steps
         float movement = Mathf.Sin(Time.time * speed);
 
-        // 计算当前帧的角度
+        // Calculate the rotation angle for the current frame
         float angle = movement * maxAngle;
 
-        // 应用旋转
-        // 左腿向前摆时，右腿应该向后摆，所以右腿取反 (-angle)
+        // Apply rotation
+        // When the left leg swings forward, the right leg should swing backward, 
+        // which is why the right leg uses the inverse value (-angle)
         leftLeg.localRotation = Quaternion.Euler(0, 0, angle);
         rightLeg.localRotation = Quaternion.Euler(0, 0, -angle);
     }

@@ -2,12 +2,16 @@ using UnityEngine;
 
 public class SpiderLegStepping : MonoBehaviour
 {
-    [Header("速率控制")]
-    public float currentSpeed = 5f;//摆动频率
-    public float range = 40f;//摆动总角度
+    [Header("Speed Control")]
+    [Tooltip("The frequency of the leg swing movement.")]
+    public float currentSpeed = 5f;
 
-    [Header("步态设置")]
-    [Tooltip("如果勾选，这只脚将与其它脚反向运动")]
+    [Header("Swing Range")]
+    [Tooltip("The total arc angle of the swing.")]
+    public float range = 40f;
+
+    [Header("Gait Settings")]
+    [Tooltip("If checked, this leg will move in the opposite direction of the standard movement.")]
     public bool isInverse = false;
 
     private float offset;
@@ -15,29 +19,30 @@ public class SpiderLegStepping : MonoBehaviour
 
     void Start()
     {
-        //稍微给点随机值，让动作不至于像机械表一样死板
+        // Add a slight random offset to prevent the movement from looking perfectly synchronized/robotic.
         offset = Random.Range(0f, 0.1f);
         enemyScript = GetComponentInParent<Enemy>();
     }
 
     void Update()
     {
-        if (enemyScript.isDead) return;  //如果敌人死亡则不再执行后续逻辑
-        //使用 Sin 函数来实现平滑的来回摆动 (-1 到 1 之间)
-        //如果是反向腿，我们在时间上加一个偏移量
+        // Stop execution if the enemy is dead.
+        if (enemyScript.isDead) return;
+
+        // Use the Sine function to achieve a smooth back-and-forth oscillation (between -1 and 1).
         float phase = Time.time * currentSpeed + offset;
         float movement = Mathf.Sin(phase);
 
-        //如果需要反向，直接取反
+        // Invert the movement if the isInverse flag is set.
         if (isInverse)
         {
             movement = -movement;
         }
 
-        //计算最终 Y 轴旋转角度
+        // Calculate the final rotation angle for the Y-axis.
         float angleY = movement * (range / 2f);
 
-        //应用旋转
+        // Apply the rotation locally.
         transform.localRotation = Quaternion.Euler(0, angleY, 0);
     }
 }
